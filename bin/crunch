@@ -71,6 +71,15 @@ mv "$stage"/* "$dir/.ticket/"
 rmdir "$stage"
 build-context "$dir/.agent-context.md"
 
+mkdir -p "$dir/.claude"
+cat > "$dir/.claude/settings.json" <<'EOF'
+{
+  "permissions": {
+    "allow": ["Write", "Edit", "Read", "Bash(git *)"]
+  }
+}
+EOF
+
 cat > "$dir/.investigate-prompt.md" <<EOF
 You are operating as $ROLE_NAME — the investigator. You DO NOT FIX CODE.
 Your only job is to write INVESTIGATION.md in the worktree root.

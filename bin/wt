@@ -51,15 +51,24 @@ EOF
 
 build-context "$dir/.agent-context.md"
 
+mkdir -p "$dir/.claude"
+cat > "$dir/.claude/settings.json" <<'EOF'
+{
+  "permissions": {
+    "allow": ["Write", "Edit", "Read", "Bash(git *)"]
+  }
+}
+EOF
+
 echo "→ $ROLE_NAME is taking on $branch"
 
 if [ -n "$TMUX" ]; then
   if [ "$agent" = "none" ]; then
     tmux new-window -n "$window_name" -c "$dir"
   else
-    tmux new-window -n "$window_name" -c "$dir" "$agent"
+    tmux new-window -n "$window_name" -c "$dir" "$agent" "Read .agent-task.md and start the task."
   fi
 else
   cd "$dir"
-  [ "$agent" = "none" ] && exec $SHELL || exec "$agent"
+  [ "$agent" = "none" ] && exec $SHELL || exec "$agent" "Read .agent-task.md and start the task."
 fi
