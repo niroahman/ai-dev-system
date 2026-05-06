@@ -51,6 +51,22 @@ plans, summaries — but NOT existing repo documentation), prepend this
 portrait at the top:
 
 $ROLE_PORTRAIT_MD
+
+If .vscode/ai/INVESTIGATION.md exists in this worktree, read it before
+starting — it contains Nikke's analysis of the bug and recommended approach.
+
+When you have finished the task, write .vscode/ai/FIX-SUMMARY.md with:
+
+$ROLE_PORTRAIT_MD
+
+## What changed
+List every file modified and what was done.
+
+## Why
+Reasoning behind each decision. Flag anything you were uncertain about.
+
+## Anything skipped or deferred
+Things you noticed but did not change.
 EOF
 
 build-context "$dir/.agent-context.md"

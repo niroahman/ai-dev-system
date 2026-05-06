@@ -1,10 +1,12 @@
 #!/bin/bash
-# Usage: poirot                   # review current worktree
-#        poirot /path/to/wt
+# Usage: poirot                        # review current worktree
+#        poirot /path/to/wt            # review specific worktree
+#        poirot . "focus on auth"      # with extra instructions
 set -e
 source "$HOME/dev-system/bin/_lib.sh"
 
 dir="${1:-$(pwd)}"
+extra_instructions="${2:-}"
 cd "$dir"
 
 resolve_named_role "Poirot"
@@ -13,6 +15,8 @@ diff=$(git diff main...HEAD)
 task=$(cat .agent-task.md 2>/dev/null || echo "(no task file)")
 context=$(cat .agent-context.md 2>/dev/null || echo "(no context)")
 repo_agents=$(cat AGENTS.md 2>/dev/null || echo "(no repo AGENTS.md)")
+fix_summary=$(cat .vscode/ai/FIX-SUMMARY.md 2>/dev/null || echo "")
+investigation=$(cat .vscode/ai/INVESTIGATION.md 2>/dev/null || echo "")
 
 prompt="You are operating as $ROLE_NAME — the reviewer. Your job is to make
 the human's review faster and sharper, NOT to fix anything yourself.
@@ -25,7 +29,15 @@ Then a blank line, then the review structure below.
 
 ORIGINAL TASK:
 $task
-
+${fix_summary:+
+WORKER SUMMARY (FIX-SUMMARY.md):
+$fix_summary}
+${investigation:+
+INVESTIGATION (INVESTIGATION.md):
+$investigation}
+${extra_instructions:+
+EXTRA INSTRUCTIONS FROM HUMAN:
+$extra_instructions}
 REPO CONVENTIONS (AGENTS.md):
 $repo_agents
 
