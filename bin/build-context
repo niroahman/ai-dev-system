@@ -1,0 +1,22 @@
+#!/bin/bash
+out="${1:-.agent-context.md}"
+stacks=$(detect-stack)
+
+{
+  echo "# Personal skills loaded for this session"
+  echo "Detected stacks: $stacks"
+  echo ""
+  for stack in $stacks; do
+    skill_dir="$HOME/dev-system/skills/$stack"
+    [ -d "$skill_dir" ] || continue
+    for skill in "$skill_dir"/*.md; do
+      [ -f "$skill" ] || continue
+      echo "---"
+      echo "## Skill: $(basename "$skill" .md) (from $stack)"
+      cat "$skill"
+      echo ""
+    done
+  done
+} > "$out"
+
+echo "Wrote $(wc -l < "$out") lines to $out"

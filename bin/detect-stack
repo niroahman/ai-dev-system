@@ -1,0 +1,28 @@
+#!/bin/bash
+stacks=("_global")
+
+case "$PWD" in
+  "$HOME/work/"*|"$HOME/Work/"*) stacks+=("_work") ;;
+  *)                              stacks+=("_personal") ;;
+esac
+
+if [ -f "package.json" ] && \
+   grep -qE '"(react|next|vite|vue|svelte)"' package.json 2>/dev/null; then
+  stacks+=("frontend")
+fi
+
+[ -f "go.mod" ] && stacks+=("backend-go")
+
+([ -f "pyproject.toml" ] || [ -f "requirements.txt" ] || [ -f "setup.py" ]) \
+  && stacks+=("backend-python")
+
+mono=0
+[ -d "apps" ] && ((mono++))
+[ -d "packages" ] && ((mono++))
+[ -d "services" ] && ((mono++))
+grep -q '"workspaces"' package.json 2>/dev/null && ((mono++))
+[ -f "pnpm-workspace.yaml" ] && ((mono++))
+[ -f "turbo.json" ] && ((mono++))
+[ "$mono" -ge 1 ] && stacks+=("monorepo")
+
+echo "${stacks[@]}"

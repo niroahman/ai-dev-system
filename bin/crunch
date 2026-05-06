@@ -1,0 +1,131 @@
+#!/bin/bash
+# Usage:
+#   crunch                              # ticket from clipboard
+#   crunch -e                           # opens $EDITOR with template
+#   crunch -d ~/tickets/PROJ-123        # folder containing ticket.md + images
+#   crunch -f ticket.txt                # specific file
+#   crunch -i screenshot.png            # add specific image (repeatable)
+#   crunch --gemini                     # use gemini for cheaper investigation
+#   crunch -t login-bug                 # custom title
+set -e
+source "$HOME/dev-system/bin/_lib.sh"
+
+title="$(date +%Y%m%d-%H%M)"
+input_mode="clipboard"
+src_dir=""
+src_file=""
+images=()
+agent="${AGENT:-claude}"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -e|--editor)  input_mode="editor"; shift ;;
+    -f|--file)    input_mode="file"; src_file="$2"; shift 2 ;;
+    -d|--dir)     input_mode="dir"; src_dir="$2"; shift 2 ;;
+    -i|--image)   images+=("$2"); shift 2 ;;
+    -t|--title)   title="$2"; shift 2 ;;
+    --gemini)     agent="gemini"; shift ;;
+    *) echo "Unknown arg: $1"; exit 1 ;;
+  esac
+done
+
+# Investigator role is always Nikke regardless of agent tool
+resolve_named_role "Nikke"
+
+stage=$(mktemp -d)
+case "$input_mode" in
+  clipboard) pbpaste > "$stage/ticket.md" ;;
+  editor)
+    cat > "$stage/ticket.md" <<'EOF'
+# Title
+
+## Description
+
+## Steps to reproduce
+
+## Expected vs actual
+
+## Notes
+EOF
+    ${EDITOR:-vim} "$stage/ticket.md"
+    ;;
+  file) cp "$src_file" "$stage/ticket.md" ;;
+  dir)
+    cp "$src_dir/ticket.md" "$stage/ticket.md" 2>/dev/null || \
+      { echo "No ticket.md in $src_dir"; exit 1; }
+    find "$src_dir" -maxdepth 1 -type f \( -iname "*.png" -o -iname "*.jpg" \
+      -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.webp" \) \
+      -exec cp {} "$stage/" \;
+    ;;
+esac
+for img in "${images[@]}"; do cp "$img" "$stage/"; done
+
+repo_root=$(git rev-parse --show-toplevel)
+repo_name=$(basename "$repo_root")
+branch="investigate/$title"
+dir="$repo_root/../wt-${repo_name}-investigate-${title//\//-}"
+
+git worktree add "$dir" -b "$branch"
+mkdir -p "$dir/.ticket"
+mv "$stage"/* "$dir/.ticket/"
+rmdir "$stage"
+build-context "$dir/.agent-context.md"
+
+cat > "$dir/.investigate-prompt.md" <<EOF
+You are operating as $ROLE_NAME — the investigator. You DO NOT FIX CODE.
+Your only job is to write INVESTIGATION.md in the worktree root.
+
+The FIRST line of INVESTIGATION.md (before any heading) must be exactly:
+
+$ROLE_PORTRAIT_MD
+
+Then a blank line, then the investigation content as specified below.
+
+Ticket and any screenshots are in .ticket/. Read all of them, including images.
+Personal skills are in .agent-context.md. Repo conventions are in AGENTS.md.
+
+Investigation steps:
+1. Read the ticket carefully. Note any ambiguity.
+2. Look at any screenshots — they often contain info the text omits.
+3. Reproduce the issue mentally by tracing through the code.
+4. Form hypotheses about root cause. Check each one in the code.
+5. If you need to run tests or add temporary logging to verify, do so —
+   this is a throwaway worktree.
+
+Write INVESTIGATION.md with:
+
+## Summary
+One paragraph: what the bug is, where it lives, confidence level.
+
+## Reproduction
+Steps that should trigger it, verified or hypothetical (mark which).
+
+## Root cause
+File:line references. Be specific.
+
+## Why other causes were ruled out
+Brief, only for plausible-but-wrong hypotheses.
+
+## Recommended fix
+Approach, not code. If multiple valid options, list them with trade-offs.
+
+## Estimated scope
+Files touched, ~lines changed, risk level.
+
+## Open questions
+Anything you couldn't determine. Address these to the human.
+
+Be terse. No filler. If the ticket is ambiguous or the bug isn't reproducible
+from available info, say so explicitly — don't invent a story.
+EOF
+
+window_name="${ROLE_NAME}-${title//\//-}"
+echo "→ $ROLE_NAME is investigating: $title"
+
+if [ -n "$TMUX" ]; then
+  tmux new-window -n "$window_name" -c "$dir" \
+    "$agent 'Read .investigate-prompt.md and follow it exactly.'"
+else
+  cd "$dir"
+  exec "$agent" "Read .investigate-prompt.md and follow it exactly."
+fi

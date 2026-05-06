@@ -1,0 +1,64 @@
+#!/bin/bash
+# Usage: wt-review                # review current worktree
+#        wt-review /path/to/wt
+set -e
+source "$HOME/dev-system/bin/_lib.sh"
+
+dir="${1:-$(pwd)}"
+cd "$dir"
+
+resolve_named_role "Poirot"
+
+diff=$(git diff main...HEAD)
+task=$(cat .agent-task.md 2>/dev/null || echo "(no task file)")
+context=$(cat .agent-context.md 2>/dev/null || echo "(no context)")
+repo_agents=$(cat AGENTS.md 2>/dev/null || echo "(no repo AGENTS.md)")
+
+prompt="You are operating as $ROLE_NAME — the reviewer. Your job is to make
+the human's review faster and sharper, NOT to fix anything yourself.
+
+The FIRST line of REVIEW.md must be exactly:
+
+$ROLE_PORTRAIT_MD
+
+Then a blank line, then the review structure below.
+
+ORIGINAL TASK:
+$task
+
+REPO CONVENTIONS (AGENTS.md):
+$repo_agents
+
+PERSONAL CONTEXT (skills loaded):
+$context
+
+DIFF:
+$diff
+
+Write REVIEW.md to stdout in this exact structure:
+
+## Summary
+One sentence: what was changed.
+
+## Likely correct
+Things that look right, briefly. Don't pad this.
+
+## Worth a closer look
+Specific lines or files where you'd focus human attention. Be concrete:
+'src/auth.ts:42 — the early return skips the audit log call, intentional?'
+
+## Possible issues
+Things that look wrong. Be honest about confidence.
+
+## Out of scope changes
+Anything touched that wasn't part of the task. Even tiny stuff.
+
+## Questions for the human
+Things you can't determine from context alone.
+
+Be terse. No preamble, no encouragement, no 'great work' language. Skip
+sections that are empty rather than writing 'none'."
+
+echo "→ $ROLE_NAME is reviewing $dir"
+echo "$prompt" | claude -p > REVIEW.md
+echo "Review written to $dir/REVIEW.md"

@@ -1,0 +1,65 @@
+#!/bin/bash
+# Usage:
+#   wt fix/login-bug "fix the login redirect"           # default: claude (Pat)
+#   wt chore/regen-mocks "..." gemini                   # explicit gemini (Mat)
+#   wt fix/x "..." none                                 # no agent, just shell
+set -e
+source "$HOME/dev-system/bin/_lib.sh"
+
+branch="$1"
+task="$2"
+agent="${3:-claude}"   # claude is default — quality over per-task cost
+
+if [ -z "$branch" ] || [ -z "$task" ]; then
+  echo "Usage: wt <branch> <task> [agent|none]"
+  exit 1
+fi
+
+# Hard cap: max 3 active worktrees (friction is the feature)
+active=$(git worktree list | wc -l)
+if [ "$((active - 1))" -ge 3 ]; then
+  echo "You have $((active - 1)) active worktrees. Finish one first:"
+  git worktree list
+  exit 1
+fi
+
+resolve_role "$agent"
+
+repo_root=$(git rev-parse --show-toplevel)
+repo_name=$(basename "$repo_root")
+dir="$repo_root/../wt-${repo_name}-${branch//\//-}"
+window_name="${ROLE_NAME}-${branch//\//-}"
+
+git worktree add "$dir" -b "$branch"
+
+# Task spec, with portrait at top + role reminder at bottom
+cat > "$dir/.agent-task.md" <<EOF
+$ROLE_PORTRAIT_MD
+
+# Task
+
+$task
+
+---
+
+You are operating as $ROLE_NAME. If you create new markdown files (notes,
+plans, summaries — but NOT existing repo documentation), prepend this
+portrait at the top:
+
+$ROLE_PORTRAIT_MD
+EOF
+
+build-context "$dir/.agent-context.md"
+
+echo "→ $ROLE_NAME is taking on $branch"
+
+if [ -n "$TMUX" ]; then
+  if [ "$agent" = "none" ]; then
+    tmux new-window -n "$window_name" -c "$dir"
+  else
+    tmux new-window -n "$window_name" -c "$dir" "$agent"
+  fi
+else
+  cd "$dir"
+  [ "$agent" = "none" ] && exec $SHELL || exec "$agent"
+fi
