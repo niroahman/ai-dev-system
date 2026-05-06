@@ -1,17 +1,21 @@
 #!/bin/bash
 # Usage:
-#   wt fix/login-bug "fix the login redirect"           # default: claude (Pat)
-#   wt chore/regen-mocks "..." gemini                   # explicit gemini (Mat)
-#   wt fix/x "..." none                                 # no agent, just shell
+#   pat fix/login-bug "fix the login redirect"   # claude (Pat)
+#   mat fix/login-bug "fix the login redirect"   # gemini (Mat)
+#   pat fix/x "..." none                         # no agent, just shell
 set -e
 source "$HOME/dev-system/bin/_lib.sh"
 
 branch="$1"
 task="$2"
-agent="${3:-claude}"   # claude is default — quality over per-task cost
+
+case "$(basename "$0")" in
+  mat) agent="${3:-gemini}" ;;
+  *)   agent="${3:-claude}" ;;
+esac
 
 if [ -z "$branch" ] || [ -z "$task" ]; then
-  echo "Usage: wt <branch> <task> [agent|none]"
+  echo "Usage: $(basename "$0") <branch> <task> [none]"
   exit 1
 fi
 
