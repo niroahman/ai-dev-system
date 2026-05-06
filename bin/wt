@@ -50,6 +50,8 @@ $ROLE_PORTRAIT_MD
 EOF
 
 build-context "$dir/.agent-context.md"
+mkdir -p "$dir/.vscode/ai"
+cp "$HOME/dev-system/portraits/$(echo "$ROLE_NAME" | tr '[:upper:]' '[:lower:]').png" "$dir/.vscode/ai/" 2>/dev/null || true
 
 mkdir -p "$dir/.claude"
 cat > "$dir/.claude/settings.json" <<'EOF'

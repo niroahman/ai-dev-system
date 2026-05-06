@@ -16,7 +16,7 @@ resolve_role() {
   local portrait_path="$HOME/dev-system/portraits/${lower}.png"
 
   if [ -s "$portrait_path" ]; then
-    ROLE_PORTRAIT_MD="<img src=\"$portrait_path\" width=\"120\" align=\"right\" />"
+    ROLE_PORTRAIT_MD="<img src=\".vscode/ai/${lower}.png\" width=\"120\" align=\"right\" />"
   else
     ROLE_PORTRAIT_MD="**$ROLE_NAME**"
   fi
@@ -31,7 +31,7 @@ resolve_named_role() {
   local portrait_path="$HOME/dev-system/portraits/${lower}.png"
 
   if [ -s "$portrait_path" ]; then
-    ROLE_PORTRAIT_MD="<img src=\"$portrait_path\" width=\"120\" align=\"right\" />"
+    ROLE_PORTRAIT_MD="<img src=\".vscode/ai/${lower}.png\" width=\"120\" align=\"right\" />"
   else
     ROLE_PORTRAIT_MD="**$ROLE_NAME**"
   fi

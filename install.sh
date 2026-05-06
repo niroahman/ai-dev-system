@@ -40,7 +40,7 @@ fi
 # 4. Global gitignore for worktree artifacts
 GIG="$HOME/.gitignore_global"
 touch "$GIG"
-for entry in ".agent-context.md" ".agent-task.md" ".investigate-prompt.md" ".ticket/" "INVESTIGATION.md" "REVIEW.md"; do
+for entry in ".vscode/ai/" ".agent-context.md" ".agent-task.md" ".investigate-prompt.md" ".ticket/" "INVESTIGATION.md" "REVIEW.md"; do
   grep -qxF "$entry" "$GIG" || echo "$entry" >> "$GIG"
 done
 git config --global core.excludesfile "$GIG"

@@ -70,6 +70,8 @@ mkdir -p "$dir/.ticket"
 mv "$stage"/* "$dir/.ticket/"
 rmdir "$stage"
 build-context "$dir/.agent-context.md"
+mkdir -p "$dir/.vscode/ai"
+cp "$HOME/dev-system/portraits/$(echo "$ROLE_NAME" | tr '[:upper:]' '[:lower:]').png" "$dir/.vscode/ai/" 2>/dev/null || true
 
 mkdir -p "$dir/.claude"
 cat > "$dir/.claude/settings.json" <<'EOF'
@@ -82,7 +84,7 @@ EOF
 
 cat > "$dir/.investigate-prompt.md" <<EOF
 You are operating as $ROLE_NAME — the investigator. You DO NOT FIX CODE.
-Your only job is to write INVESTIGATION.md in the worktree root.
+Your only job is to write .vscode/ai/INVESTIGATION.md in the worktree root.
 
 The FIRST line of INVESTIGATION.md (before any heading) must be exactly:
 
@@ -101,7 +103,7 @@ Investigation steps:
 5. If you need to run tests or add temporary logging to verify, do so —
    this is a throwaway worktree.
 
-Write INVESTIGATION.md with:
+Write .vscode/ai/INVESTIGATION.md with:
 
 ## Summary
 One paragraph: what the bug is, where it lives, confidence level.

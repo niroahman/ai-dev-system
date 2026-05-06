@@ -35,7 +35,7 @@ $context
 DIFF:
 $diff
 
-Write REVIEW.md to stdout in this exact structure:
+Write .vscode/ai/REVIEW.md to stdout in this exact structure:
 
 ## Summary
 One sentence: what was changed.
@@ -59,6 +59,9 @@ Things you can't determine from context alone.
 Be terse. No preamble, no encouragement, no 'great work' language. Skip
 sections that are empty rather than writing 'none'."
 
+mkdir -p "$dir/.vscode/ai"
+cp "$HOME/dev-system/portraits/poirot.png" "$dir/.vscode/ai/" 2>/dev/null || true
+
 echo "→ $ROLE_NAME is reviewing $dir"
-echo "$prompt" | claude -p > REVIEW.md
-echo "Review written to $dir/REVIEW.md"
+echo "$prompt" | claude -p > "$dir/.vscode/ai/REVIEW.md"
+echo "Review written to $dir/.vscode/ai/REVIEW.md"
