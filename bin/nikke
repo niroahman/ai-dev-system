@@ -131,7 +131,7 @@ from available info, say so explicitly — don't invent a story.
 EOF
 
 window_name="${ROLE_NAME}-${title//\//-}"
-echo "→ $ROLE_NAME is investigating: $title"
+printf "\n🔍 \033[1;33mNikke\033[0m is on the case: \033[1;36m%s\033[0m\n\n" "$title"
 
 if [ -n "$TMUX" ]; then
   tmux new-window -n "$window_name" -c "$dir" \

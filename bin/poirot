@@ -1,6 +1,6 @@
 #!/bin/bash
-# Usage: wt-review                # review current worktree
-#        wt-review /path/to/wt
+# Usage: poirot                   # review current worktree
+#        poirot /path/to/wt
 set -e
 source "$HOME/dev-system/bin/_lib.sh"
 
@@ -62,6 +62,10 @@ sections that are empty rather than writing 'none'."
 mkdir -p "$dir/.vscode/ai"
 cp "$HOME/dev-system/portraits/poirot.png" "$dir/.vscode/ai/" 2>/dev/null || true
 
-echo "→ $ROLE_NAME is reviewing $dir"
-echo "$prompt" | claude -p > "$dir/.vscode/ai/REVIEW.md"
-echo "Review written to $dir/.vscode/ai/REVIEW.md"
+printf "\n🎩 \033[1;35mPoirot\033[0m is reviewing \033[1;36m%s\033[0m...\n\n" "$(basename "$dir")"
+if echo "$prompt" | claude -p --permission-mode bypassPermissions > "$dir/.vscode/ai/REVIEW.md"; then
+  printf "✅ \033[1;32mReview written to\033[0m .vscode/ai/REVIEW.md\n"
+else
+  printf "❌ \033[1;31mPoirot encountered an error\033[0m\n"
+  exit 1
+fi
