@@ -104,13 +104,16 @@ echo "$dir" > "$HOME/.$(basename "$0")_last_worktree"
 
 printf "\n🔨 \033[1;32m%s\033[0m is taking on \033[1;36m%s\033[0m\n\n" "$ROLE_NAME" "$branch"
 
+agent_cmd="$agent"
+[ "$agent" = "gemini" ] && agent_cmd="gemini --model flash"
+
 if [ -n "$TMUX" ]; then
   if [ "$agent" = "none" ]; then
     tmux new-window -n "$window_name" -c "$dir"
   else
-    tmux new-window -n "$window_name" -c "$dir" "$agent" "Read .agent-task.md and start the task."
+    tmux new-window -n "$window_name" -c "$dir" $agent_cmd "Read .agent-task.md and start the task."
   fi
 else
   cd "$dir"
-  [ "$agent" = "none" ] && exec $SHELL || exec "$agent" "Read .agent-task.md and start the task."
+  [ "$agent" = "none" ] && exec $SHELL || exec $agent_cmd "Read .agent-task.md and start the task."
 fi
