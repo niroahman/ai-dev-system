@@ -22,6 +22,51 @@ source ~/.zshrc
 detect-stack # verify it works in any git repo
 ```
 
+## Daily workflow
+
+### Standard bug flow
+
+```bash
+# 1. Copy ticket to clipboard, then:
+nikke -t PROJ-123-bug-name
+
+# 2. Read .vscode/ai/INVESTIGATION.md in Nikke's worktree
+# 3. Dispatch Pat with Nikke's findings:
+pat -n bug/PROJ-123-bug-name
+
+# 4. When Pat finishes, jump to its worktree and review:
+goto pat
+poirot
+
+# 5. Commit, push PR, clean up:
+wt-clean pat nikke
+```
+
+### Pat vs Mat duel
+
+```bash
+duel -n fix/PROJ-123-branch      # spins both with Nikke's investigation
+goto pat
+poirot --compare                  # Poirot compares both, gives verdict
+wt-clean pat mat nikke
+```
+
+### Commands
+
+| Command | Description |
+|---|---|
+| `nikke -t <title>` | Investigate ticket from clipboard |
+| `pat <branch> "task"` | Claude worker on a new branch |
+| `pat -n <branch>` | Claude worker, pulls Nikke's investigation |
+| `mat <branch> "task"` | Gemini Flash worker on a new branch |
+| `mat -n <branch>` | Gemini Flash worker, pulls Nikke's investigation |
+| `duel [-n] <branch>` | Spin Pat and Mat on the same task |
+| `poirot` | Review current worktree |
+| `poirot --compare` | Compare Pat vs Mat, give verdict |
+| `roster` | Show active worktrees and status |
+| `goto <pat\|mat\|nikke>` | Jump to role's tmux window/worktree |
+| `wt-clean <role\|all>` | Remove worktrees after merge |
+
 ## Editing workflow
 
 Files are symlinked into `~/dev-system/`, `~/.claude/`, `~/.gemini/`. Edit
