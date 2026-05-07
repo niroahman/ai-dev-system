@@ -2,8 +2,16 @@
 # Usage: poirot                        # review current worktree
 #        poirot /path/to/wt            # review specific worktree
 #        poirot . "focus on auth"      # with extra instructions
+#        poirot --compare              # compare Pat vs Mat (reads ~/.mat_last_worktree)
+#        poirot --compare "notes"      # compare with extra instructions
 set -e
 source "$HOME/dev-system/bin/_lib.sh"
+
+compare=0
+if [ "$1" = "--compare" ]; then
+  compare=1
+  shift
+fi
 
 dir="${1:-$(pwd)}"
 extra_instructions="${2:-}"
@@ -11,6 +19,86 @@ cd "$dir"
 
 resolve_named_role "Poirot"
 
+mkdir -p "$dir/.vscode/ai"
+cp "$HOME/dev-system/portraits/poirot.png" "$dir/.vscode/ai/" 2>/dev/null || true
+
+if [ "$compare" = "1" ]; then
+  mat_dir=$(cat "$HOME/.mat_last_worktree" 2>/dev/null || echo "")
+  if [ -z "$mat_dir" ] || [ ! -d "$mat_dir" ]; then
+    printf "❌ No Mat worktree found — run mat first\n"
+    exit 1
+  fi
+
+  diff_pat=$(git diff main...HEAD)
+  diff_mat=$(git -C "$mat_dir" diff main...HEAD)
+  task=$(cat .agent-task.md 2>/dev/null || echo "(no task file)")
+  investigation=$(cat .vscode/ai/INVESTIGATION.md 2>/dev/null || echo "")
+  repo_agents=$(cat AGENTS.md 2>/dev/null || echo "(no repo AGENTS.md)")
+  summary_pat=$(cat .vscode/ai/FIX-SUMMARY.md 2>/dev/null || echo "")
+  summary_mat=$(cat "$mat_dir/.vscode/ai/FIX-SUMMARY.md" 2>/dev/null || echo "")
+
+  prompt="You are operating as $ROLE_NAME — the reviewer. Two workers (Pat using Claude, Mat using Gemini Flash) solved the same task independently. Your job is to compare both solutions and help the human pick the better one.
+
+The FIRST line of REVIEW.md must be exactly:
+
+$ROLE_PORTRAIT_MD
+
+ORIGINAL TASK:
+$task
+${investigation:+
+INVESTIGATION:
+$investigation}
+${extra_instructions:+
+EXTRA INSTRUCTIONS FROM HUMAN:
+$extra_instructions}
+REPO CONVENTIONS (AGENTS.md):
+$repo_agents
+
+PAT'S SUMMARY:
+${summary_pat:-(no summary)}
+
+PAT'S DIFF:
+$diff_pat
+
+MAT'S SUMMARY:
+${summary_mat:-(no summary)}
+
+MAT'S DIFF:
+$diff_mat
+
+Write .vscode/ai/REVIEW.md with:
+
+## Verdict
+One sentence: which solution to use and why.
+
+## Pat's approach
+Brief summary of what Pat did differently.
+
+## Mat's approach
+Brief summary of what Mat did differently.
+
+## Key differences
+Concrete tradeoffs — correctness, style, test coverage, edge cases.
+
+## Concerns in the chosen solution
+Anything worth a closer look before merging.
+
+## Questions for the human
+Anything you can't determine from context alone.
+
+Be terse. No preamble. Skip empty sections."
+
+  printf "\n🎩 \033[1;35mPoirot\033[0m is comparing Pat vs Mat...\n\n"
+  if echo "$prompt" | claude -p --permission-mode bypassPermissions > "$dir/.vscode/ai/REVIEW.md"; then
+    printf "✅ \033[1;32mComparison written to\033[0m .vscode/ai/REVIEW.md\n"
+  else
+    printf "❌ \033[1;31mPoirot encountered an error\033[0m\n"
+    exit 1
+  fi
+  exit 0
+fi
+
+# Standard single-worktree review
 diff=$(git diff main...HEAD)
 task=$(cat .agent-task.md 2>/dev/null || echo "(no task file)")
 context=$(cat .agent-context.md 2>/dev/null || echo "(no context)")
@@ -70,9 +158,6 @@ Things you can't determine from context alone.
 
 Be terse. No preamble, no encouragement, no 'great work' language. Skip
 sections that are empty rather than writing 'none'."
-
-mkdir -p "$dir/.vscode/ai"
-cp "$HOME/dev-system/portraits/poirot.png" "$dir/.vscode/ai/" 2>/dev/null || true
 
 printf "\n🎩 \033[1;35mPoirot\033[0m is reviewing \033[1;36m%s\033[0m...\n\n" "$(basename "$dir")"
 if echo "$prompt" | claude -p --permission-mode bypassPermissions > "$dir/.vscode/ai/REVIEW.md"; then

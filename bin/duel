@@ -1,0 +1,26 @@
+#!/bin/bash
+# Spin up both Pat (claude) and Mat (gemini) on the same task.
+# Usage:
+#   duel fix/my-branch "task description"
+#   duel -n fix/my-branch              # pull Nikke's investigation for both
+set -e
+source "$HOME/dev-system/bin/_lib.sh"
+
+use_nikke=""
+if [ "$1" = "-n" ]; then
+  use_nikke="-n"
+  shift
+fi
+
+branch="$1"
+task="${2:-}"
+
+if [ -z "$branch" ]; then
+  echo "Usage: duel [-n] <branch> [task]"
+  exit 1
+fi
+
+printf "\n⚔️  \033[1;37mDuel started\033[0m — Pat vs Mat on \033[1;36m%s\033[0m\n\n" "$branch"
+
+pat $use_nikke "${branch}-pat" "$task"
+mat $use_nikke "${branch}-mat" "$task"
