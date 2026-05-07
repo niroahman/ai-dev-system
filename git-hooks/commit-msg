@@ -1,0 +1,2 @@
+#!/bin/bash
+sed -i '' '/^Co-Authored-By:.*[Cc]laude/d;/^Co-Authored-By:.*[Aa]nthropicr/d;/^Co-Authored-By:.*[Gg]emini/d;/^Co-Authored-By:.*[Cc]opilot/d' "$1"

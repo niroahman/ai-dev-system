@@ -45,7 +45,16 @@ for entry in ".vscode/ai/" ".agent-context.md" ".agent-task.md" ".investigate-pr
 done
 git config --global core.excludesfile "$GIG"
 
-# 5. Make scripts executable (in case clone didn't preserve)
+# 5. Global git hook: strip AI co-authorship from commits
+mkdir -p "$REPO_DIR/git-hooks"
+cat > "$REPO_DIR/git-hooks/commit-msg" <<'HOOK'
+#!/bin/bash
+sed -i '' '/^Co-Authored-By:.*[Cc]laude/d;/^Co-Authored-By:.*[Aa]nthropicr/d;/^Co-Authored-By:.*[Gg]emini/d;/^Co-Authored-By:.*[Cc]opilot/d' "$1"
+HOOK
+chmod +x "$REPO_DIR/git-hooks/commit-msg"
+git config --global core.hooksPath "$REPO_DIR/git-hooks"
+
+# 6. Make scripts executable (in case clone didn't preserve)
 chmod +x "$REPO_DIR/bin/"* 2>/dev/null || true
 
 # 6. Verify deps
