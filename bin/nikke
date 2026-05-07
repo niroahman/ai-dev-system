@@ -60,7 +60,7 @@ EOF
 esac
 for img in "${images[@]}"; do cp "$img" "$stage/"; done
 
-repo_root=$(git rev-parse --show-toplevel)
+repo_root=$(git worktree list --porcelain | awk 'NR==1{print $2}')
 repo_name=$(basename "$repo_root")
 branch="investigate/$title"
 dir="$repo_root/../wt-${repo_name}-investigate-${title//\//-}"
@@ -129,6 +129,8 @@ Anything you couldn't determine. Address these to the human.
 Be terse. No filler. If the ticket is ambiguous or the bug isn't reproducible
 from available info, say so explicitly — don't invent a story.
 EOF
+
+echo "$dir" > "$HOME/.nikke_last_worktree"
 
 window_name="${ROLE_NAME}-${title//\//-}"
 printf "\n🔍 \033[1;33mNikke\033[0m is on the case: \033[1;36m%s\033[0m\n\n" "$title"

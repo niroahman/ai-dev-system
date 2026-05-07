@@ -1,10 +1,17 @@
 #!/bin/bash
 # Usage:
-#   pat fix/login-bug "fix the login redirect"   # claude (Pat)
-#   mat fix/login-bug "fix the login redirect"   # gemini (Mat)
-#   pat fix/x "..." none                         # no agent, just shell
+#   pat fix/login-bug "fix the login redirect"      # claude (Pat)
+#   pat -n fix/login-bug "fix the login redirect"   # + pull in Nikke's last investigation
+#   mat fix/login-bug "fix the login redirect"      # gemini (Mat)
+#   pat fix/x "..." none                            # no agent, just shell
 set -e
 source "$HOME/dev-system/bin/_lib.sh"
+
+use_nikke=0
+if [ "$1" = "-n" ]; then
+  use_nikke=1
+  shift
+fi
 
 branch="$1"
 task="$2"
@@ -15,7 +22,7 @@ case "$(basename "$0")" in
 esac
 
 if [ -z "$branch" ] || [ -z "$task" ]; then
-  echo "Usage: $(basename "$0") <branch> <task> [none]"
+  echo "Usage: $(basename "$0") [-n] <branch> <task> [none]"
   exit 1
 fi
 
@@ -29,7 +36,7 @@ fi
 
 resolve_role "$agent"
 
-repo_root=$(git rev-parse --show-toplevel)
+repo_root=$(git worktree list --porcelain | awk 'NR==1{print $2}')
 repo_name=$(basename "$repo_root")
 dir="$repo_root/../wt-${repo_name}-${branch//\//-}"
 window_name="${ROLE_NAME}-${branch//\//-}"
@@ -72,6 +79,17 @@ EOF
 build-context "$dir/.agent-context.md"
 mkdir -p "$dir/.vscode/ai"
 cp "$HOME/dev-system/portraits/$(echo "$ROLE_NAME" | tr '[:upper:]' '[:lower:]').png" "$dir/.vscode/ai/" 2>/dev/null || true
+
+if [ "$use_nikke" = "1" ]; then
+  nikke_dir=$(cat "$HOME/.nikke_last_worktree" 2>/dev/null || echo "")
+  if [ -n "$nikke_dir" ] && [ -f "$nikke_dir/.vscode/ai/INVESTIGATION.md" ]; then
+    cp "$nikke_dir/.vscode/ai/INVESTIGATION.md" "$dir/.vscode/ai/INVESTIGATION.md"
+    cp "$nikke_dir/.vscode/ai/nikke.png" "$dir/.vscode/ai/" 2>/dev/null || true
+    printf "📋 Pulled Nikke's investigation from %s\n" "$(basename "$nikke_dir")"
+  else
+    printf "⚠️  No Nikke investigation found — run nikke first\n"
+  fi
+fi
 
 mkdir -p "$dir/.claude"
 cat > "$dir/.claude/settings.json" <<'EOF'
