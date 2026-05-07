@@ -1,0 +1,64 @@
+#!/bin/bash
+# Show active worktrees for all roster members.
+
+printf "\n🎭 \033[1;37mRoster\033[0m\n\n"
+
+# human-readable duration from a directory's creation time
+dir_age() {
+  local dir="$1"
+  local created
+  created=$(stat -f "%SB" -t "%s" "$dir" 2>/dev/null) || { echo "?"; return; }
+  local now elapsed
+  now=$(date +%s)
+  elapsed=$((now - created))
+  if [ "$elapsed" -lt 60 ]; then
+    echo "${elapsed}s"
+  elif [ "$elapsed" -lt 3600 ]; then
+    echo "$((elapsed / 60))m"
+  else
+    echo "$((elapsed / 3600))h $((elapsed % 3600 / 60))m"
+  fi
+}
+
+# check if a tmux window exists for this role
+tmux_status() {
+  local role="$1"
+  if [ -n "$TMUX" ] && tmux list-windows -F "#{window_name}" 2>/dev/null | grep -qi "^$role"; then
+    printf "\033[1;32m● running\033[0m"
+  elif [ -n "$TMUX" ]; then
+    printf "\033[1;31m○ window closed\033[0m"
+  else
+    printf "\033[0;37m? (no tmux)\033[0m"
+  fi
+}
+
+for role in pat mat nikke; do
+  tracking="$HOME/.${role}_last_worktree"
+
+  case "$role" in
+    pat)   icon="🔨"; color="1;32" ;;
+    mat)   icon="🔧"; color="1;34" ;;
+    nikke) icon="🔍"; color="1;33" ;;
+  esac
+
+  if [ ! -f "$tracking" ]; then
+    printf "  %s \033[%sm%-8s\033[0m — idle\n" "$icon" "$color" "$role"
+    continue
+  fi
+
+  dir=$(cat "$tracking")
+  if [ ! -d "$dir" ]; then
+    printf "  %s \033[%sm%-8s\033[0m — stale (worktree gone)\n" "$icon" "$color" "$role"
+    continue
+  fi
+
+  branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+  changed=$(git -C "$dir" diff --name-only HEAD 2>/dev/null | wc -l | tr -d ' ')
+  age=$(dir_age "$dir")
+  status=$(tmux_status "$role")
+
+  printf "  %s \033[%sm%-8s\033[0m — \033[1;36m%s\033[0m  %s  \033[0;37m%s changed · %s\033[0m\n" \
+    "$icon" "$color" "$role" "$branch" "$status" "$changed" "$age"
+done
+
+printf "\n🎩 \033[1;35mPoirot\033[0m — on call (run: poirot)\n\n"
