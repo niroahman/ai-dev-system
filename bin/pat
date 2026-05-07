@@ -21,10 +21,12 @@ case "$(basename "$0")" in
   *)   agent="${3:-claude}" ;;
 esac
 
-if [ -z "$branch" ] || [ -z "$task" ]; then
-  echo "Usage: $(basename "$0") [-n] <branch> <task> [none]"
+if [ -z "$branch" ]; then
+  echo "Usage: $(basename "$0") [-n] <branch> [task] [none]"
   exit 1
 fi
+[ -z "$task" ] && [ "$use_nikke" = "1" ] && task="See INVESTIGATION.md for full context."
+[ -z "$task" ] && { echo "Usage: $(basename "$0") [-n] <branch> [task] [none]"; exit 1; }
 
 # Hard cap: max 3 active worktrees (friction is the feature)
 active=$(git worktree list | wc -l)
