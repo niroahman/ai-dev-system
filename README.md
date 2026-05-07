@@ -3,8 +3,14 @@
 Personal AI development workflow — skills, scripts, and configs for working
 with Claude Code and Gemini CLI.
 
-The roster: **Pat** (Claude worker), **Mat** (Gemini worker),
-**Nikke** (investigator), **Poirot** (reviewer).
+## The roster
+
+| | Name | Role | Tool |
+|---|---|---|---|
+| <img src="portraits/pat.png" width="60" /> | **Pat** | Worker | Claude |
+| <img src="portraits/mat.png" width="60" /> | **Mat** | Worker | Gemini |
+| <img src="portraits/nikke.png" width="60" /> | **Nikke** | Investigator | Claude |
+| <img src="portraits/poirot.png" width="60" /> | **Poirot** | Reviewer | Claude |
 
 ## Setup on a new machine
 
