@@ -97,7 +97,7 @@ mkdir -p "$dir/.claude"
 cat > "$dir/.claude/settings.json" <<'EOF'
 {
   "permissions": {
-    "allow": ["Write", "Edit", "Read", "Bash(git *)"]
+    "allow": ["Write", "Edit", "Read", "Bash(git *)", "Bash(npm *)", "Bash(pnpm *)", "Bash(yarn *)", "Bash(npx *)"]
   }
 }
 EOF
