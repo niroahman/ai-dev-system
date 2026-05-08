@@ -22,12 +22,13 @@ if [ ! -d "$dir" ]; then
 fi
 
 if [ -n "$TMUX" ]; then
-  window=$(tmux list-windows -F "#{window_index} #{window_name}" 2>/dev/null \
-    | grep -i "^[0-9]* $role" | awk '{print $1}' | head -1)
-  if [ -n "$window" ]; then
-    tmux select-window -t "$window"
+  role_cap="$(echo "${role:0:1}" | tr '[:lower:]' '[:upper:]')${role:1}"
+  session=$(tmux list-sessions -F "#{session_name}" 2>/dev/null \
+    | grep -i "^${role_cap}" | head -1)
+  if [ -n "$session" ]; then
+    tmux switch-client -t "$session"
   else
-    printf "📂 No tmux window for %s — opening new window at %s\n" "$role" "$dir"
+    printf "📂 No tmux session for %s — opening new window at %s\n" "$role" "$dir"
     tmux new-window -c "$dir"
   fi
 else

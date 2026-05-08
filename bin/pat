@@ -111,10 +111,11 @@ agent_cmd="$agent"
 
 if [ -n "$TMUX" ]; then
   if [ "$agent" = "none" ]; then
-    tmux new-window -n "$window_name" -c "$dir"
+    tmux new-session -d -s "$window_name" -c "$dir"
   else
-    tmux new-window -n "$window_name" -c "$dir" $agent_cmd "Read .agent-task.md and start the task."
+    tmux new-session -d -s "$window_name" -c "$dir" $agent_cmd "Read .agent-task.md and start the task."
   fi
+  printf "🪟  Session \033[1;33m%s\033[0m started — run \033[1mgoto %s\033[0m to visit\n" "$window_name" "$(echo "$ROLE_NAME" | tr '[:upper:]' '[:lower:]')"
 else
   cd "$dir"
   [ "$agent" = "none" ] && exec $SHELL || exec $agent_cmd "Read .agent-task.md and start the task."
