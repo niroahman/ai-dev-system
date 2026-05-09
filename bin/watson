@@ -1,0 +1,154 @@
+#!/bin/bash
+# Usage:
+#   watson                              # ticket from clipboard
+#   watson -e                           # opens $EDITOR with template
+#   watson -d ~/tickets/PROJ-123        # folder containing ticket.md + images
+#   watson -f ticket.txt                # specific file
+#   watson -i screenshot.png            # add specific image (repeatable)
+#   watson -t login-bug                 # custom title
+#   watson --inline <dir>               # run in existing worktree (no new worktree, sync)
+set -e
+source "$HOME/dev-system/bin/_lib.sh"
+
+title="$(date +%Y%m%d-%H%M)"
+input_mode="clipboard"
+src_dir=""
+src_file=""
+images=()
+inline_dir=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -e|--editor)  input_mode="editor"; shift ;;
+    -f|--file)    input_mode="file"; src_file="$2"; shift 2 ;;
+    -d|--dir)     input_mode="dir"; src_dir="$2"; shift 2 ;;
+    -i|--image)   images+=("$2"); shift 2 ;;
+    -t|--title)   title="$2"; shift 2 ;;
+    --inline)     inline_dir="$2"; shift 2 ;;
+    *) echo "Unknown arg: $1"; exit 1 ;;
+  esac
+done
+
+resolve_named_role "Watson"
+
+write_watson_prompt() {
+  local dir="$1"
+  cat > "$dir/.watson-prompt.md" <<EOF
+You are operating as $ROLE_NAME — the context gatherer. You MAP THE TERRITORY. You do NOT diagnose bugs or fix code.
+
+The FIRST line of CONTEXT.md (before any heading) must be exactly:
+
+$ROLE_PORTRAIT_MD
+
+Then a blank line, then the content specified below.
+
+Ticket and any screenshots are in .ticket/. Read all of them, including images.
+
+Your only job is to write .vscode/ai/CONTEXT.md.
+
+Steps:
+1. Read the ticket. What components, features, or code areas are mentioned?
+2. Search the codebase for relevant files (use search/grep tools).
+3. Read the key files to understand the involved code paths.
+4. Check recent git history for those files: git log --oneline -- <file>
+5. Find related tests.
+6. Note any architectural patterns or constraints relevant to this area.
+
+Write .vscode/ai/CONTEXT.md with:
+
+## Relevant files
+List each file with a brief reason why it's relevant.
+
+## Key code paths
+Function/method names involved. Specific file:line references where notable.
+
+## Recent changes
+Any recent commits touching relevant files that could be related.
+
+## Related tests
+Test files covering this area.
+
+## Codebase patterns
+Architecture conventions or constraints relevant to this area.
+
+## Focus areas for deeper investigation
+2-5 specific questions or areas worth digging into next.
+
+Facts only. No diagnosis. No fixes. No speculation beyond what you observe in the code.
+Be terse — this is a map, not an essay.
+EOF
+}
+
+# Inline mode: ticket already staged, run sync in existing dir, no tmux
+if [ -n "$inline_dir" ]; then
+  printf "\n🔎 \033[1;36mWatson\033[0m is mapping the codebase...\n\n"
+  write_watson_prompt "$inline_dir"
+  (cd "$inline_dir" && gemini --model flash -p "Read .watson-prompt.md and follow it exactly." -y 2>/dev/null) || true
+  printf "\n🗺️  \033[1;36mWatson\033[0m finished mapping\n"
+  exit 0
+fi
+
+# Standalone mode: parse ticket, create own worktree, launch async in tmux
+stage=$(mktemp -d)
+case "$input_mode" in
+  clipboard) pbpaste > "$stage/ticket.md" ;;
+  editor)
+    cat > "$stage/ticket.md" <<'EOF'
+# Title
+
+## Description
+
+## Steps to reproduce
+
+## Expected vs actual
+
+## Notes
+EOF
+    ${EDITOR:-vim} "$stage/ticket.md"
+    ;;
+  file) cp "$src_file" "$stage/ticket.md" ;;
+  dir)
+    cp "$src_dir/ticket.md" "$stage/ticket.md" 2>/dev/null || \
+      { echo "No ticket.md in $src_dir"; exit 1; }
+    find "$src_dir" -maxdepth 1 -type f \( -iname "*.png" -o -iname "*.jpg" \
+      -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.webp" \) \
+      -exec cp {} "$stage/" \;
+    ;;
+esac
+for img in "${images[@]}"; do cp "$img" "$stage/"; done
+
+repo_root=$(git worktree list --porcelain | awk 'NR==1{print $2}')
+repo_name=$(basename "$repo_root")
+branch="gather/$title"
+dir="$repo_root/../wt-${repo_name}-gather-${title//\//-}"
+
+git worktree add "$dir" -b "$branch"
+mkdir -p "$dir/.ticket"
+mv "$stage"/* "$dir/.ticket/"
+rmdir "$stage"
+build-context "$dir/.agent-context.md"
+mkdir -p "$dir/.vscode/ai"
+cp "$HOME/dev-system/portraits/$(echo "$ROLE_NAME" | tr '[:upper:]' '[:lower:]').png" "$dir/.vscode/ai/" 2>/dev/null || true
+
+mkdir -p "$dir/.claude"
+cat > "$dir/.claude/settings.json" <<'EOF'
+{
+  "permissions": {
+    "allow": ["Write", "Edit", "Read", "Bash(git *)"]
+  }
+}
+EOF
+
+write_watson_prompt "$dir"
+echo "$dir" > "$HOME/.watson_last_worktree"
+
+window_name="${ROLE_NAME}-${title//\//-}"
+printf "\n🔎 \033[1;36mWatson\033[0m is mapping: \033[1;36m%s\033[0m\n\n" "$title"
+
+if [ -n "$TMUX" ]; then
+  tmux new-window -n "$window_name" -c "$dir" \
+    "gemini --model flash 'Read .watson-prompt.md and follow it exactly.'"
+else
+  cd "$dir"
+  exec gemini --model flash "Read .watson-prompt.md and follow it exactly."
+fi

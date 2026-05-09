@@ -1,17 +1,24 @@
 #!/bin/bash
 # Usage:
-#   pat fix/login-bug "fix the login redirect"      # claude (Pat)
-#   pat -n fix/login-bug "fix the login redirect"   # + pull in Nikke's last investigation
-#   mat fix/login-bug "fix the login redirect"      # gemini (Mat)
-#   pat fix/x "..." none                            # no agent, just shell
+#   pat fix/login-bug "fix the login redirect"         # claude (Pat)
+#   pat -n fix/login-bug "fix the login redirect"      # + pull Nikke's last investigation
+#   pat -w fix/login-bug "fix the login redirect"      # + pull Watson's last context
+#   pat -n -w fix/login-bug "fix the login redirect"   # + both
+#   mat fix/login-bug "fix the login redirect"         # gemini (Mat)
+#   pat fix/x "..." none                               # no agent, just shell
 set -e
 source "$HOME/dev-system/bin/_lib.sh"
 
 use_nikke=0
-if [ "$1" = "-n" ]; then
-  use_nikke=1
-  shift
-fi
+use_watson=0
+
+while [[ "${1}" == -* ]]; do
+  case "$1" in
+    -n) use_nikke=1; shift ;;
+    -w) use_watson=1; shift ;;
+    *) echo "Unknown flag: $1"; exit 1 ;;
+  esac
+done
 
 branch="$1"
 task="$2"
@@ -26,6 +33,7 @@ if [ -z "$branch" ]; then
   exit 1
 fi
 [ -z "$task" ] && [ "$use_nikke" = "1" ] && task="See INVESTIGATION.md for full context."
+[ -z "$task" ] && [ "$use_watson" = "1" ] && task="See CONTEXT.md for gathered context."
 [ -z "$task" ] && { echo "Usage: $(basename "$0") [-n] <branch> [task] [none]"; exit 1; }
 
 # Hard cap: max 3 active worktrees (friction is the feature)
@@ -61,6 +69,9 @@ portrait at the top:
 
 $ROLE_PORTRAIT_MD
 
+If .vscode/ai/CONTEXT.md exists in this worktree, read it first —
+it contains Watson's map of relevant files and code paths.
+
 If .vscode/ai/INVESTIGATION.md exists in this worktree, read it before
 starting — it contains Nikke's analysis of the bug and recommended approach.
 
@@ -90,6 +101,17 @@ if [ "$use_nikke" = "1" ]; then
     printf "📋 Pulled Nikke's investigation from %s\n" "$(basename "$nikke_dir")"
   else
     printf "⚠️  No Nikke investigation found — run nikke first\n"
+  fi
+fi
+
+if [ "$use_watson" = "1" ]; then
+  watson_dir=$(cat "$HOME/.watson_last_worktree" 2>/dev/null || echo "")
+  if [ -n "$watson_dir" ] && [ -f "$watson_dir/.vscode/ai/CONTEXT.md" ]; then
+    cp "$watson_dir/.vscode/ai/CONTEXT.md" "$dir/.vscode/ai/CONTEXT.md"
+    cp "$watson_dir/.vscode/ai/watson.png" "$dir/.vscode/ai/" 2>/dev/null || true
+    printf "🗺️  Pulled Watson's context from %s\n" "$(basename "$watson_dir")"
+  else
+    printf "⚠️  No Watson context found — run watson first\n"
   fi
 fi
 

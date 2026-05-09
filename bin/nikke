@@ -1,12 +1,13 @@
 #!/bin/bash
 # Usage:
-#   crunch                              # ticket from clipboard
-#   crunch -e                           # opens $EDITOR with template
-#   crunch -d ~/tickets/PROJ-123        # folder containing ticket.md + images
-#   crunch -f ticket.txt                # specific file
-#   crunch -i screenshot.png            # add specific image (repeatable)
-#   crunch --gemini                     # use gemini for cheaper investigation
-#   crunch -t login-bug                 # custom title
+#   nikke                              # ticket from clipboard
+#   nikke -e                           # opens $EDITOR with template
+#   nikke -d ~/tickets/PROJ-123        # folder containing ticket.md + images
+#   nikke -f ticket.txt                # specific file
+#   nikke -i screenshot.png            # add specific image (repeatable)
+#   nikke -t login-bug                 # custom title
+#   nikke --no-watson                  # skip Watson's pre-mapping step
+#   nikke --gemini                     # use gemini for investigation (Watson always uses Flash)
 set -e
 source "$HOME/dev-system/bin/_lib.sh"
 
@@ -16,15 +17,17 @@ src_dir=""
 src_file=""
 images=()
 agent="${AGENT:-claude}"
+skip_watson=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -e|--editor)  input_mode="editor"; shift ;;
-    -f|--file)    input_mode="file"; src_file="$2"; shift 2 ;;
-    -d|--dir)     input_mode="dir"; src_dir="$2"; shift 2 ;;
-    -i|--image)   images+=("$2"); shift 2 ;;
-    -t|--title)   title="$2"; shift 2 ;;
-    --gemini)     agent="gemini"; shift ;;
+    -e|--editor)    input_mode="editor"; shift ;;
+    -f|--file)      input_mode="file"; src_file="$2"; shift 2 ;;
+    -d|--dir)       input_mode="dir"; src_dir="$2"; shift 2 ;;
+    -i|--image)     images+=("$2"); shift 2 ;;
+    -t|--title)     title="$2"; shift 2 ;;
+    --no-watson)    skip_watson=1; shift ;;
+    --gemini)       agent="gemini"; shift ;;
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac
 done
@@ -82,6 +85,11 @@ cat > "$dir/.claude/settings.json" <<'EOF'
 }
 EOF
 
+# Watson runs first — maps the codebase before Nikke starts investigating
+if [ "$skip_watson" = "0" ]; then
+  watson --inline "$dir"
+fi
+
 cat > "$dir/.investigate-prompt.md" <<EOF
 You are operating as $ROLE_NAME — the investigator. You DO NOT FIX CODE.
 Your only job is to write .vscode/ai/INVESTIGATION.md in the worktree root.
@@ -94,6 +102,8 @@ Then a blank line, then the investigation content as specified below.
 
 Ticket and any screenshots are in .ticket/. Read all of them, including images.
 Personal skills are in .agent-context.md. Repo conventions are in AGENTS.md.
+If .vscode/ai/CONTEXT.md exists, read it first — Watson has already mapped
+the relevant files and code paths. Use it as your starting point.
 
 Investigation steps:
 1. Read the ticket carefully. Note any ambiguity.

@@ -1,8 +1,14 @@
 # dev-system
-
-Personal AI development workflow — skills, scripts, and configs for working
-with Claude Code and Gemini CLI.
-
+<table>
+  <tr>
+    <td width="50%">
+      <img width="633" height="1024" alt="image" src="https://github.com/user-attachments/assets/ec775ee6-1cdd-400a-8834-a8cf2d5d6ed9" />
+    </td>
+    <td width="50%">
+      Personal AI development workflow — skills, scripts, and configs for working with Claude Code and Gemini CLI.
+    </td>
+  </tr>
+</table>
 ## The roster
 
 | | Name | Role | Tool |
@@ -11,6 +17,7 @@ with Claude Code and Gemini CLI.
 | <img src="portraits/mat.png" width="60" /> | **Mat** | Worker | Gemini |
 | <img src="portraits/nikke.png" width="60" /> | **Nikke** | Investigator | Claude |
 | <img src="portraits/poirot.png" width="60" /> | **Poirot** | Reviewer | Claude |
+| | **Watson** | Context gatherer | Gemini Flash |
 
 ## Setup on a new machine
 
@@ -55,7 +62,9 @@ wt-clean pat mat nikke
 
 | Command | Description |
 |---|---|
-| `nikke -t <title>` | Investigate ticket from clipboard |
+| `watson -t <title>` | Map codebase context for a ticket (Gemini Flash) |
+| `nikke -t <title>` | Investigate ticket from clipboard (Watson runs first) |
+| `nikke --no-watson -t <title>` | Investigate without Watson pre-mapping |
 | `pat <branch> "task"` | Claude worker on a new branch |
 | `pat -n <branch>` | Claude worker, pulls Nikke's investigation |
 | `mat <branch> "task"` | Gemini Flash worker on a new branch |
@@ -89,10 +98,17 @@ git pull
 ./install.sh # idempotent
 ```
 
+## Skill boundary
+
+**Skills never contain work IP, codebase specifics, or team conventions.**
+Those belong in each repo's `AGENTS.md`. Skills only describe behavior
+preferences and stack-generic patterns.
+
+When tempted to add work-specific knowledge to a skill, push it to the
+team's `AGENTS.md` instead — it belongs where teammates can read it.
+
 ## Portraits
 
 Drop PNGs into `portraits/` named `pat.png`, `mat.png`, `nikke.png`,
-`poirot.png`. Empty placeholders are fine — scripts fall back to bold text
-until real images are present.
-
-See docs/DEV-SYSTEM-SETUP.md for the full workflow design.
+`poirot.png`, `watson.png`. Empty placeholders are fine — scripts fall back
+to bold text until real images are present.

@@ -22,6 +22,8 @@ resolve_named_role "Poirot"
 mkdir -p "$dir/.vscode/ai"
 cp "$HOME/dev-system/portraits/poirot.png" "$dir/.vscode/ai/" 2>/dev/null || true
 
+base=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || echo "main")
+
 if [ "$compare" = "1" ]; then
   mat_dir=$(cat "$HOME/.mat_last_worktree" 2>/dev/null || echo "")
   if [ -z "$mat_dir" ] || [ ! -d "$mat_dir" ]; then
@@ -29,8 +31,8 @@ if [ "$compare" = "1" ]; then
     exit 1
   fi
 
-  diff_pat=$(git diff main...HEAD)
-  diff_mat=$(git -C "$mat_dir" diff main...HEAD)
+  diff_pat=$(git diff "$base"...HEAD)
+  diff_mat=$(git -C "$mat_dir" diff "$base"...HEAD)
   task=$(cat .agent-task.md 2>/dev/null || echo "(no task file)")
   investigation=$(cat .vscode/ai/INVESTIGATION.md 2>/dev/null || echo "")
   repo_agents=$(cat AGENTS.md 2>/dev/null || echo "(no repo AGENTS.md)")
@@ -38,6 +40,8 @@ if [ "$compare" = "1" ]; then
   summary_mat=$(cat "$mat_dir/.vscode/ai/FIX-SUMMARY.md" 2>/dev/null || echo "")
 
   prompt="You are operating as $ROLE_NAME — the reviewer. Two workers (Pat using Claude, Mat using Gemini Flash) solved the same task independently. Your job is to compare both solutions and help the human pick the better one.
+
+Base your verdict on the diffs below. Do not comment on code outside these diffs.
 
 The FIRST line of REVIEW.md must be exactly:
 
@@ -103,7 +107,7 @@ Be terse. No preamble. Skip empty sections."
 fi
 
 # Standard single-worktree review
-diff=$(git diff main...HEAD)
+diff=$(git diff "$base"...HEAD)
 task=$(cat .agent-task.md 2>/dev/null || echo "(no task file)")
 context=$(cat .agent-context.md 2>/dev/null || echo "(no context)")
 repo_agents=$(cat AGENTS.md 2>/dev/null || echo "(no repo AGENTS.md)")
@@ -113,11 +117,17 @@ investigation=$(cat .vscode/ai/INVESTIGATION.md 2>/dev/null || echo "")
 prompt="You are operating as $ROLE_NAME — the reviewer. Your job is to make
 the human's review faster and sharper, NOT to fix anything yourself.
 
+Review ONLY the changes in the diff below. Do not comment on code that was
+not modified in this branch.
+
 The FIRST line of REVIEW.md must be exactly:
 
 $ROLE_PORTRAIT_MD
 
 Then a blank line, then the review structure below.
+
+DIFF (this is what you are reviewing):
+$diff
 
 ORIGINAL TASK:
 $task
@@ -135,9 +145,6 @@ $repo_agents
 
 PERSONAL CONTEXT (skills loaded):
 $context
-
-DIFF:
-$diff
 
 Write .vscode/ai/REVIEW.md to stdout in this exact structure:
 
@@ -163,7 +170,12 @@ Things you can't determine from context alone.
 Be terse. No preamble, no encouragement, no 'great work' language. Skip
 sections that are empty rather than writing 'none'."
 
-printf "\n🎩 \033[1;35mPoirot\033[0m is reviewing \033[1;36m%s\033[0m...\n\n" "$(basename "$dir")"
+branch_current=$(git rev-parse --abbrev-ref HEAD)
+stat_summary=$(git diff --stat "$base"...HEAD | tail -1)
+
+printf "\n🎩 \033[1;35mPoirot\033[0m is reviewing \033[1;36m%s\033[0m\n" "$(basename "$dir")"
+printf "   \033[0;37m%s\033[0m → \033[0;37m%s\033[0m\n" "$branch_current" "$base"
+printf "   \033[0;33m%s\033[0m\n\n" "$stat_summary"
 if echo "$prompt" | claude -p --permission-mode bypassPermissions > "$dir/.vscode/ai/REVIEW.md"; then
   printf "✅ \033[1;32mReview written to\033[0m .vscode/ai/REVIEW.md\n"
 else
