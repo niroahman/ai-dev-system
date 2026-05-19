@@ -1,0 +1,54 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash",
+      "WebFetch",
+      "WebSearch",
+
+      "Agent",
+      "Skill",
+      "ToolSearch",
+      "ScheduleWakeup",
+      "NotebookEdit",
+
+      "EnterWorktree",
+      "ExitWorktree",
+
+      "TeamCreate",
+      "TeamDelete",
+      "SendMessage",
+
+      "CronCreate",
+      "CronList",
+      "CronDelete",
+      "Monitor",
+      "PushNotification",
+      "RemoteTrigger"
+    ],
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "AskUserQuestion",
+      "EnterPlanMode",
+      "ExitPlanMode",
+      "TaskCreate",
+      "TaskList",
+      "TaskGet",
+      "TaskUpdate",
+      "TaskOutput",
+      "TaskStop",
+      "mcp__safe-tools__run_tests",
+      "mcp__safe-tools__run_install",
+      "mcp__safe-tools__run_linter",
+      "mcp__safe-tools__git_status",
+      "mcp__safe-tools__git_log",
+      "mcp__safe-tools__git_diff",
+      "mcp__safe-tools__git_commit",
+      "mcp__safe-tools__list_dir",
+      "mcp__safe-tools__check_tool"
+    ]
+  }
+}

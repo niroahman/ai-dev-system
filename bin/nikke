@@ -80,7 +80,18 @@ mkdir -p "$dir/.claude"
 cat > "$dir/.claude/settings.json" <<'EOF'
 {
   "permissions": {
-    "allow": ["Write", "Edit", "Read", "Bash(git *)"]
+    "allow": [
+      "Read", "Write", "Glob", "Grep",
+      "AskUserQuestion",
+      "TaskCreate", "TaskList", "TaskGet", "TaskUpdate", "TaskOutput", "TaskStop",
+      "mcp__safe-tools__run_tests",
+      "mcp__safe-tools__run_linter",
+      "mcp__safe-tools__git_status",
+      "mcp__safe-tools__git_log",
+      "mcp__safe-tools__git_diff",
+      "mcp__safe-tools__list_dir",
+      "mcp__safe-tools__check_tool"
+    ]
   }
 }
 EOF
