@@ -36,6 +36,7 @@ install.sh     idempotent setup script — symlinks everything, sets PATH, gitig
 | `nikke` | Investigator | Claude | Investigates tickets, writes INVESTIGATION.md. Calls Watson --inline first. |
 | `pat` | Worker | Claude | Implements fixes/features. |
 | `mat` | Worker | Gemini Flash | Same as Pat, Gemini variant. Symlink to pat. |
+| `ai-team` | — | — | fzf menu: choose your fighter. Retro arcade flow selector. |
 | `duel` | — | Both | Spins Pat and Mat on the same task for comparison. |
 | `poirot` | Reviewer | Claude | Reviews a worktree, writes REVIEW.md to brief the human. |
 | `goto` | — | — | Jumps to a role's tmux session. |

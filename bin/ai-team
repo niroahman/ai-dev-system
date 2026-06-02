@@ -1,0 +1,112 @@
+#!/bin/bash
+# ╔════════════════════════════════════════════════╗
+# ║  ai-team — choose your fighter (sparkle ed.)  ║
+# ╚════════════════════════════════════════════════╝
+set -e
+
+# --- Gentle error if deps missing, but degrade gracefully ---
+LOLCAT=""
+BOXES=""
+TOILET=""
+command -v lolcat >/dev/null 2>&1 && LOLCAT=1
+command -v boxes  >/dev/null 2>&1 && BOXES=1
+command -v toilet >/dev/null 2>&1 && TOILET=1
+
+# --- Random Hercule Poirot quote ---
+random_quote() {
+  local quotes=(
+    '"The little grey cells, mon ami."'
+    '"Order and method. Without them, nothing."'
+    '"One does not need to bend the truth. The truth, it bends all by itself."'
+    '"I do not run. I proceed with order and method."'
+    '"It is the brain, the little grey cells, on which one must rely."'
+    '"The impossible could not have happened, therefore the impossible must be possible in spite of appearances."'
+    '"Tout de suite! Everything at once — it is not the Poirot way."'
+    '"If the facts are hidden, one must employ the psychology."'
+    '"Do not let the tongue outrun the brain."'
+    '"Rest assured — Hercule Poirot will discover the truth."'
+  )
+  local idx=$((RANDOM % ${#quotes[@]}))
+  printf '  🎩  %s\n\n' "${quotes[$idx]}"
+}
+
+# --- Banner ---
+banner() {
+  if [ -n "$TOILET" ]; then
+    toilet -f smblock --gay "AI TEAM"
+  else
+    printf '\033[1;35m  ⚔️  AI TEAM — CHOOSE YOUR FIGHTER  ⚔️\033[0m\n\n'
+  fi
+}
+
+# --- Clear screen, show header ---
+clear
+banner
+
+if [ -n "$LOLCAT" ]; then
+  random_quote | lolcat -f 2>/dev/null || random_quote
+else
+  random_quote
+fi
+
+# --- Menu items ---
+items=(
+  '🗺️  Full Recon       Watson → Nikke → Pat       W→N→P chain, full investigation'
+  '🔍  Investigation    Nikke → Pat                bug analysis + fix'
+  '🔨  Pat Solo         Claude implementor         straight to the code'
+  '⚔️  Duel             Pat vs Mat                 compare Claude vs Gemini'
+  '🔧  Mat Solo         Gemini implementor         Flash-powered fixes'
+  '🗺️  Watson Solo      Map the territory          codebase context only'
+)
+
+# --- fzf selection ---
+choice=$(
+  printf '%s\n' "${items[@]}" \
+  | fzf \
+    --height=55% \
+    --layout=reverse \
+    --border=double \
+    --border-label=' CHOOSE YOUR FIGHTER ' \
+    --prompt='▶ ' \
+    --pointer='➤ ' \
+    --marker='✓ ' \
+    --color='fg:#cdd6f4,bg:#1e1e2e,hl:#f5c2e7,fg+:#cdd6f4,bg+:#313244,hl+:#f5c2e7,pointer:#cba6f7,border:#cba6f7,prompt:#a6e3a1,marker:#f38ba8,header:#89b4fa' \
+    --header='  ═══ SELECT WITH ARROW KEYS, ENTER TO CONFIRM ═══' \
+    --preview='echo' \
+    --preview-window=hidden \
+    --no-info \
+    --cycle
+)
+
+[ -z "$choice" ] && { printf '\n👋  Until next time.\n'; exit 0; }
+
+# --- Branch prompt ---
+printf '\n'
+if [ -n "$BOXES" ]; then
+  printf '\033[1;36mBranch name:\033[0m ' | boxes -d parchment 2>/dev/null || \
+    printf '\033[1;36mBranch name:\033[0m '
+else
+  printf '\033[1;36mBranch:\033[0m '
+fi
+read -r branch
+[ -z "$branch" ] && { printf '❌  Branch required.\n'; exit 1; }
+
+# --- Sparkle transition ---
+printf '\n'
+if [ -n "$TOILET" ]; then
+  toilet -f term --gay "GO!" 2>/dev/null || printf '⚡ GO! ⚡\n'
+else
+  printf '⚡  Launching... ⚡\n'
+fi
+sleep 0.3
+
+# --- Launch ---
+case "${choice:0:20}" in
+  '🗺️  Full Recon'*)     watson "$branch" ;;
+  '🔍  Investigation'*)  nikke "$branch" ;;
+  '🔨  Pat Solo'*)       pat "$branch" ;;
+  '⚔️  Duel'*)           duel "$branch" ;;
+  '🔧  Mat Solo'*)       mat "$branch" ;;
+  '🗺️  Watson Solo'*)    watson "$branch" ;;
+  *) printf 'Unknown: %s\n' "$choice"; exit 1 ;;
+esac
