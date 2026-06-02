@@ -32,19 +32,72 @@ install.sh     idempotent setup script — symlinks everything, sets PATH, gitig
 
 | Script | Role | Tool | Description |
 |---|---|---|---|
-| `nikke` | Investigator | Claude | Investigates tickets, writes INVESTIGATION.md. Calls Watson first. |
 | `watson` | Context gatherer | Gemini Flash | Maps relevant files/code paths, writes CONTEXT.md. |
-| `pat` | Worker | Claude | Implements fixes/features on a branch. |
-| `mat` | Worker | Gemini Flash | Same as Pat, Gemini variant. |
+| `nikke` | Investigator | Claude | Investigates tickets, writes INVESTIGATION.md. Calls Watson --inline first. |
+| `pat` | Worker | Claude | Implements fixes/features. |
+| `mat` | Worker | Gemini Flash | Same as Pat, Gemini variant. Symlink to pat. |
 | `duel` | — | Both | Spins Pat and Mat on the same task for comparison. |
 | `poirot` | Reviewer | Claude | Reviews a worktree, writes REVIEW.md to brief the human. |
-| `goto` | — | — | Jumps to a role's tmux window/worktree. |
+| `goto` | — | — | Jumps to a role's tmux session. |
 | `roster` | — | — | Shows active worktrees and status. |
 | `wt-clean` | — | — | Removes worktrees after merge. |
 | `detect-stack` | — | — | Detects stacks in a repo, prints layer names. |
 | `build-context` | — | — | Assembles .agent-context.md from detected skill layers. |
 
-`_lib.sh` is sourced by all scripts — contains `resolve_role` and `resolve_named_role`.
+`_lib.sh` is sourced by all scripts — contains shared helpers:
+`resolve_role`, `resolve_named_role`, `setup_worktree`, `find_continue_wt`,
+`write_claude_settings`, `launch_tmux`, `track_worktree`.
+
+## Workflow
+
+All agents share the same pattern. Context lives in `.vscode/ai/context/` in the
+main branch — put TICKET.md, screenshots, and architecture notes there.
+
+### Quick reference
+
+```
+# Full recon: Watson → Nikke → Pat
+watson WEB-7373              # new WT, editor TICKET.md → CONTEXT.md
+nikke -c                     # same WT → INVESTIGATION.md
+pat -c                       # same WT → FIX
+
+# Investigation only
+nikke login-bug              # new WT, editor, Watson --inline → INVESTIGATION.md
+pat -c                       # same WT → FIX
+
+# Solo fix
+pat fix/branch               # new WT, editor → FIX
+
+# Compare
+duel fix/branch              # two new WTs (Pat + Mat)
+
+# Cleanup
+wt-clean
+```
+
+### Commands
+
+| Command | Worktree | Editor |
+|---------|----------|--------|
+| `watson <branch>` | new | yes |
+| `nikke <branch>` | new | yes |
+| `pat <branch>` / `mat <branch>` | new | yes |
+| `nikke -c` | previous (Nikke→Watson) | no |
+| `pat -c` / `mat -c` | previous (Nikke→Watson) | no |
+| `pat -c -w /path` | explicit | no |
+| `duel <branch>` | two new (Pat+Mat) | yes |
+
+### How it works
+
+1. **New worktree**: `<script> <branch>` creates a git worktree, copies
+   `.vscode/ai/context/` from main, opens `$EDITOR` for TICKET.md. On save+exit,
+   the agent launches in its own tmux session.
+
+2. **Continue**: `<script> -c` finds the most recent worktree (Nikke's, then
+   Watson's) and launches the agent directly — no new worktree, no editor.
+
+3. **Tmux**: Inside tmux, sessions start detached (`goto <role>` to switch).
+   Outside tmux, they attach directly.
 
 ## Conventions
 

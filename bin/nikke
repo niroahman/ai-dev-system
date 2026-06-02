@@ -1,122 +1,88 @@
 #!/bin/bash
 # Usage:
-#   nikke                              # ticket from clipboard
-#   nikke -e                           # opens $EDITOR with template
-#   nikke -d ~/tickets/PROJ-123        # folder containing ticket.md + images
-#   nikke -f ticket.txt                # specific file
-#   nikke -i screenshot.png            # add specific image (repeatable)
-#   nikke -t login-bug                 # custom title
-#   nikke --no-watson                  # skip Watson's pre-mapping step
-#   nikke --gemini                     # use gemini for investigation (Watson always uses Flash)
+#   nikke login-bug             # new worktree, editor, Watson --inline, investigation
+#   nikke -c                     # continue in previous worktree
+#   nikke -c -w /path/to/wt      # continue in specific worktree
+#   nikke --gemini login-bug     # use gemini for investigation
 set -e
 source "$HOME/dev-system/bin/_lib.sh"
 
-title="$(date +%Y%m%d-%H%M)"
-input_mode="clipboard"
-src_dir=""
-src_file=""
-images=()
-agent="${AGENT:-claude}"
-skip_watson=0
+cont=0
+wt_path=""
+agent="claude"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -e|--editor)    input_mode="editor"; shift ;;
-    -f|--file)      input_mode="file"; src_file="$2"; shift 2 ;;
-    -d|--dir)       input_mode="dir"; src_dir="$2"; shift 2 ;;
-    -i|--image)     images+=("$2"); shift 2 ;;
-    -t|--title)     title="$2"; shift 2 ;;
-    --no-watson)    skip_watson=1; shift ;;
-    --gemini)       agent="gemini"; shift ;;
-    *) echo "Unknown arg: $1"; exit 1 ;;
+    -c) cont=1; shift ;;
+    -w) wt_path="$2"; shift 2 ;;
+    --gemini) agent="gemini"; shift ;;
+    *) break ;;
   esac
 done
 
-# Investigator role is always Nikke regardless of agent tool
+branch="${1:-}"
 resolve_named_role "Nikke"
-
-stage=$(mktemp -d)
-case "$input_mode" in
-  clipboard) pbpaste > "$stage/ticket.md" ;;
-  editor)
-    cat > "$stage/ticket.md" <<'EOF'
-# Title
-
-## Description
-
-## Steps to reproduce
-
-## Expected vs actual
-
-## Notes
-EOF
-    ${EDITOR:-vim} "$stage/ticket.md"
-    ;;
-  file) cp "$src_file" "$stage/ticket.md" ;;
-  dir)
-    cp "$src_dir/ticket.md" "$stage/ticket.md" 2>/dev/null || \
-      { echo "No ticket.md in $src_dir"; exit 1; }
-    find "$src_dir" -maxdepth 1 -type f \( -iname "*.png" -o -iname "*.jpg" \
-      -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.webp" \) \
-      -exec cp {} "$stage/" \;
-    ;;
-esac
-for img in "${images[@]}"; do cp "$img" "$stage/"; done
-
 repo_root=$(git worktree list --porcelain | awk 'NR==1{print $2}')
 repo_name=$(basename "$repo_root")
-branch="investigate/$title"
-dir="$repo_root/../wt-${repo_name}-investigate-${title//\//-}"
 
-git worktree add "$dir" -b "$branch"
-mkdir -p "$dir/.ticket"
-mv "$stage"/* "$dir/.ticket/"
-rmdir "$stage"
-build-context "$dir/.agent-context.md"
-mkdir -p "$dir/.vscode/ai"
-cp "$HOME/dev-system/portraits/$(echo "$ROLE_NAME" | tr '[:upper:]' '[:lower:]').png" "$dir/.vscode/ai/" 2>/dev/null || true
+# --- Determine worktree ---
+if [ "$cont" = "1" ]; then
+  if [ -n "$wt_path" ]; then
+    dir="$wt_path"
+  else
+    dir=$(find_continue_wt)
+    if [ -z "$dir" ]; then
+      echo "❌ No previous worktree found. Run watson first, or use -w <path>."
+      exit 1
+    fi
+  fi
 
-mkdir -p "$dir/.claude"
-cat > "$dir/.claude/settings.json" <<'EOF'
-{
-  "permissions": {
-    "allow": [
-      "Read", "Write", "Glob", "Grep",
-      "AskUserQuestion",
-      "TaskCreate", "TaskList", "TaskGet", "TaskUpdate", "TaskOutput", "TaskStop",
-      "mcp__safe-tools__run_tests",
-      "mcp__safe-tools__run_linter",
-      "mcp__safe-tools__git_status",
-      "mcp__safe-tools__git_log",
-      "mcp__safe-tools__git_diff",
-      "mcp__safe-tools__list_dir",
-      "mcp__safe-tools__check_tool"
-    ]
-  }
-}
-EOF
+  if [ ! -d "$dir" ]; then
+    echo "❌ Worktree gone: $dir"
+    exit 1
+  fi
 
-# Watson runs first — maps the codebase before Nikke starts investigating
-if [ "$skip_watson" = "0" ]; then
-  watson --inline "$dir"
+  window_name="${ROLE_NAME}-$(basename "$dir")"
+  printf "♻️  Reusing worktree: %s\n" "$(basename "$dir")"
+else
+  if [ -z "$branch" ]; then
+    echo "Usage: nikke <branch>             new worktree"
+    echo "       nikke -c                   continue previous"
+    echo "       nikke -c -w <path>         continue specific"
+    exit 1
+  fi
+
+  dir="$repo_root/../wt-${repo_name}-investigate-${branch//\//-}"
+  window_name="${ROLE_NAME}-investigate-${branch//\//-}"
+
+  git worktree add "$dir" -b "investigate/$branch"
+
+  build-context "$dir/.agent-context.md"
+  setup_worktree "$dir" "$repo_root"
 fi
 
-cat > "$dir/.investigate-prompt.md" <<EOF
-You are operating as $ROLE_NAME — the investigator. You DO NOT FIX CODE.
-Your only job is to write .vscode/ai/INVESTIGATION.md in the worktree root.
+# --- Watson runs inline first ---
+run_watson_inline "$dir"
 
-The FIRST line of INVESTIGATION.md (before any heading) must be exactly:
+# --- Write investigation prompt ---
+{
+  printf '%s\n\n' "$ROLE_PORTRAIT_MD"
+  printf 'You are operating as %s — the investigator. You DO NOT FIX CODE.\n' "$ROLE_NAME"
+  printf 'Your only job is to write .vscode/ai/INVESTIGATION.md in the worktree root.\n\n'
+  cat <<'NIKKEBODY'
+# Context
 
-$ROLE_PORTRAIT_MD
+You are working in a worktree. The following files may exist:
 
-Then a blank line, then the investigation content as specified below.
+.vscode/ai/context/TICKET.md       — ticket written by the human, + any images
+.vscode/ai/context/*.md, *.png     — architecture docs, diagrams, permanent context
+.vscode/ai/CONTEXT.md              — Watson's codebase map (relevant files, code paths)
 
-Ticket and any screenshots are in .ticket/. Read all of them, including images.
-Personal skills are in .agent-context.md. Repo conventions are in AGENTS.md.
-If .vscode/ai/CONTEXT.md exists, read it first — Watson has already mapped
-the relevant files and code paths. Use it as your starting point.
+Read all available context before starting. Read any images in context/.
+.agent-context.md for personal skills. AGENTS.md for repo conventions.
 
-Investigation steps:
+# Investigation
+
 1. Read the ticket carefully. Note any ambiguity.
 2. Look at any screenshots — they often contain info the text omits.
 3. Reproduce the issue mentally by tracing through the code.
@@ -149,17 +115,16 @@ Anything you couldn't determine. Address these to the human.
 
 Be terse. No filler. If the ticket is ambiguous or the bug isn't reproducible
 from available info, say so explicitly — don't invent a story.
-EOF
+NIKKEBODY
+} > "$dir/.investigate-prompt.md"
 
-echo "$dir" > "$HOME/.nikke_last_worktree"
+# --- Housekeeping ---
+mkdir -p "$dir/.vscode/ai"
+cp "$HOME/dev-system/portraits/nikke.png" "$dir/.vscode/ai/" 2>/dev/null || true
+write_claude_settings "$dir"
+track_worktree "nikke" "$dir"
 
-window_name="${ROLE_NAME}-${title//\//-}"
-printf "\n🔍 \033[1;33mNikke\033[0m is on the case: \033[1;36m%s\033[0m\n\n" "$title"
+# --- Launch ---
+printf "\n🔍 \033[1;33mNikke\033[0m is on the case: \033[1;36m%s\033[0m\n\n" "$(basename "$dir")"
 
-if [ -n "$TMUX" ]; then
-  tmux new-window -n "$window_name" -c "$dir" \
-    "$agent 'Read .investigate-prompt.md and follow it exactly.'"
-else
-  cd "$dir"
-  exec "$agent" "Read .investigate-prompt.md and follow it exactly."
-fi
+launch_tmux "$dir" "$window_name" "$agent \"Read .investigate-prompt.md and follow it exactly.\""
