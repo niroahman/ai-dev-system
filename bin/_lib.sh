@@ -143,6 +143,18 @@ write_claude_settings() {
 EOF
 }
 
+# wait_for_agent <session_prefix>
+# Block until no tmux session matches the prefix. No-op outside tmux
+# (launch_tmux already blocks when not in a session).
+wait_for_agent() {
+  local prefix="$1"
+  [ -z "$TMUX" ] && return
+  printf "⏳  Waiting for \033[1;36m%s\033[0m to finish...\n" "$prefix"
+  while tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -qi "^${prefix}-"; do
+    sleep 3
+  done
+}
+
 # launch_tmux <dir> <window_name> <cmd>
 # Start tmux session: detached if inside tmux, attached otherwise.
 launch_tmux() {

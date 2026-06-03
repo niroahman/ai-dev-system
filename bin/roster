@@ -61,4 +61,16 @@ for role in pat mat nikke; do
     "$icon" "$color" "$role" "$branch" "$status" "$changed" "$age"
 done
 
+TED_SESSION="AI-team-coach-TED"
+BEARD_SESSION="AI-team-coach-BEARD"
+for coach in TED BEARD; do
+  [ "$coach" = "TED" ] && csession="$TED_SESSION" && cicon="🎽" || csession="$BEARD_SESSION" && cicon="🧔"
+  clower=$(echo "$coach" | tr '[:upper:]' '[:lower:]')
+  if tmux has-session -t "$csession" 2>/dev/null; then
+    printf "  %s \033[1;37m%-8s\033[0m — \033[1;32m● running\033[0m  (goto %s)\n" "$cicon" "$coach" "$clower"
+  else
+    printf "  %s \033[1;37m%-8s\033[0m — idle\n" "$cicon" "$coach"
+  fi
+done
+
 printf "\n🎩 \033[1;35mPoirot\033[0m — on call (run: poirot)\n\n"

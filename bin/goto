@@ -1,12 +1,31 @@
 #!/bin/bash
-# Usage: goto pat | goto mat | goto nikke
+# Usage: goto pat | goto mat | goto nikke | goto ted
 # cd to the role's last worktree in current shell, or switch tmux window.
 set -e
 
+TED_SESSION="AI-team-coach-TED"
+BEARD_SESSION="AI-team-coach-BEARD"
+
 role="${1:-}"
 if [ -z "$role" ]; then
-  echo "Usage: goto <pat|mat|nikke>"
+  echo "Usage: goto <pat|mat|nikke|ted|beard>"
   exit 1
+fi
+
+# Coaches have no worktree — just switch to their session
+if [ "$role" = "ted" ] || [ "$role" = "beard" ]; then
+  [ "$role" = "ted" ] && target="$TED_SESSION" || target="$BEARD_SESSION"
+  if [ -n "$TMUX" ]; then
+    if tmux has-session -t "$target" 2>/dev/null; then
+      tmux switch-client -t "$target"
+    else
+      printf "❌ %s is not running\n" "${role^^}"
+      exit 1
+    fi
+  else
+    tmux attach-session -t "$target" 2>/dev/null || printf "❌ %s is not running\n" "${role^^}"
+  fi
+  exit 0
 fi
 
 tracking="$HOME/.${role}_last_worktree"
