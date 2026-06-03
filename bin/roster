@@ -53,7 +53,7 @@ for role in pat mat nikke; do
   fi
 
   branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-  changed=$(git -C "$dir" diff --name-only HEAD 2>/dev/null | wc -l | tr -d ' ')
+  changed=$({ git -C "$dir" diff --name-only HEAD; git -C "$dir" diff --name-only; } 2>/dev/null | sort -u | wc -l | tr -d ' ')
   age=$(dir_age "$dir")
   status=$(tmux_status "$role")
 

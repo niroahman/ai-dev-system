@@ -130,7 +130,12 @@ Reasoning behind each decision. Flag anything uncertain.
 
 ## Anything skipped or deferred
 Things you noticed but did not change.
+
 TASKBODY
+  role_lower=$(echo "$ROLE_NAME" | tr '[:upper:]' '[:lower:]')
+  printf 'Once FIX-SUMMARY.md is written, your job is done. Run this to mark yourself free:\n\n'
+  printf '  rm -f ~/.%s_last_worktree\n\n' "$role_lower"
+  printf 'The worktree stays open for the human to review.\nDo not commit, do not push, do not clean up. Exit cleanly.\n'
 } > "$dir/.agent-task.md"
 
 # --- Housekeeping ---
