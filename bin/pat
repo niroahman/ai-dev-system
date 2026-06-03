@@ -87,10 +87,10 @@ run_watson_inline "$dir"
 
 You are working in a worktree. The following files may exist:
 
-.vscode/ai/context/TICKET.md       — ticket written by the human, + any images
-.vscode/ai/context/*.md, *.png     — architecture docs, diagrams, permanent context
-.vscode/ai/CONTEXT.md              — Watson's codebase map (relevant files, code paths)
-.vscode/ai/INVESTIGATION.md        — Nikke's investigation (root cause, recommended fix)
+.ai-team/context/TICKET.md       — ticket written by the human, + any images
+.ai-team/context/*.md, *.png     — architecture docs, diagrams, permanent context
+.ai-team/CONTEXT.md              — Watson's codebase map (relevant files, code paths)
+.ai-team/INVESTIGATION.md        — Nikke's investigation (root cause, recommended fix)
 
 Read all available context before starting. AGENTS.md for repo conventions.
 .agent-context.md for personal skills.
@@ -107,10 +107,10 @@ TASKBODY
 # Review cycle
 
 When you have finished the fix:
-1. Run `poirot` from the shell. Read .vscode/ai/REVIEW.md.
+1. Run `poirot` from the shell. Read .ai-team/REVIEW.md.
 2. Address every issue Poirot found. Fix the code.
 3. Run `poirot` again. Verify REVIEW.md shows no remaining issues.
-4. Write .vscode/ai/FIX-SUMMARY.md with:
+4. Write .ai-team/FIX-SUMMARY.md with:
 TASKBODY2
   printf '%s\n\n' "$ROLE_PORTRAIT_MD"
   cat <<'TASKBODY3'
@@ -126,8 +126,8 @@ TASKBODY3
 } > "$dir/.agent-task.md"
 
 # --- Housekeeping ---
-mkdir -p "$dir/.vscode/ai"
-cp "$HOME/dev-system/portraits/$(echo "$ROLE_NAME" | tr '[:upper:]' '[:lower:]').png" "$dir/.vscode/ai/" 2>/dev/null || true
+mkdir -p "$dir/.ai-team"
+cp "$HOME/dev-system/portraits/$(echo "$ROLE_NAME" | tr '[:upper:]' '[:lower:]').png" "$dir/.ai-team/" 2>/dev/null || true
 write_claude_settings "$dir"
 track_worktree "$(basename "$0")" "$dir"
 
