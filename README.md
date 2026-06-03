@@ -18,15 +18,18 @@ never interfere with each other or your working tree.
 
 ```
 ticket
-  └─▶ Watson   maps relevant files → CONTEXT.md       (Gemini Flash, fast)
+  └─▶ Watson   maps relevant files → .ai-team/CONTEXT.md      (Gemini Flash)
         └─▶ Nikke  investigates root cause → INVESTIGATION.md  (Claude)
               └─▶ Pat / Mat  implements fix on a branch        (Claude / Gemini)
-                    └─▶ Poirot  reviews, writes REVIEW.md      (Claude)
+                    └─▶ Poirot  reviews branch vs main         (Claude)
 ```
 
+Watson runs **inline** (synchronously, no tmux) inside Nikke and Pat so
+context is always available when the main agent starts.
+
 **Why worktrees?** Multiple agents work in parallel without branch-switching
-overhead. Each worktree gets its own `.claude/settings.json` written at
-dispatch time, scoping permissions to exactly what that role needs.
+overhead. Each worktree gets its own `.claude/settings.json` at dispatch time,
+scoping permissions to exactly what that role needs.
 
 **Why two models?** `duel` spins Pat (Claude) and Mat (Gemini) on the same
 task. Poirot compares both outputs and gives a verdict — useful for catching
@@ -43,10 +46,10 @@ in scope without polluting global prompts.
 | | Name | Role | Tool |
 |---|---|---|---|
 | <img src="portraits/pat.png" width="60" /> | **Pat** | Worker | Claude |
-| <img src="portraits/mat.png" width="60" /> | **Mat** | Worker | Gemini |
+| <img src="portraits/mat.png" width="60" /> | **Mat** | Worker | Gemini Flash |
 | <img src="portraits/nikke.png" width="60" /> | **Nikke** | Investigator | Claude |
 | <img src="portraits/poirot.png" width="60" /> | **Poirot** | Reviewer | Claude |
-| | **Watson** | Context gatherer | Gemini Flash |
+| | **Watson** | Context gatherer | Gemini Flash / Claude Haiku |
 
 ## Setup on a new machine
 
@@ -58,32 +61,47 @@ source ~/.zshrc
 detect-stack # verify it works in any git repo
 ```
 
+Add `.ai-team/` to your global gitignore so agent context never accidentally commits:
+
+```bash
+echo '.ai-team/' >> ~/.gitignore_global
+git config --global core.excludesFile ~/.gitignore_global
+```
+
 ## Daily workflow
 
 ### Standard bug flow
 
 ```bash
-# 1. Copy ticket to clipboard, then:
-nikke -t PROJ-123-bug-name
+# 1. Write ticket to .ai-team/context/TICKET.md, then:
+nikke WEB-7373           # new WT, Watson maps first, you edit TICKET.md → INVESTIGATION.md
 
-# 2. Read .vscode/ai/INVESTIGATION.md in Nikke's worktree
-# 3. Dispatch Pat with Nikke's findings:
-pat -n bug/PROJ-123-bug-name
+# 2. Pat picks up Nikke's worktree:
+pat -c                   # continues in Nikke's WT → implements fix
 
-# 4. When Pat finishes, jump to its worktree and review:
-goto pat
+# 3. Poirot reviews the full branch (committed + unstaged):
 poirot
+
+# 4. Pat/Mat finish and mark themselves free automatically.
+#    Worktree stays open for human review.
 
 # 5. Commit, push PR, clean up:
 wt-clean pat nikke
 ```
 
+### Full recon flow
+
+```bash
+watson WEB-7373          # standalone Watson: maps codebase, editor for TICKET.md
+nikke -c                 # Nikke continues in Watson's WT → INVESTIGATION.md
+pat -c                   # Pat continues in Nikke's WT → fix
+```
+
 ### Pat vs Mat duel
 
 ```bash
-duel -n fix/PROJ-123-branch      # spins both with Nikke's investigation
-goto pat
-poirot --compare                  # Poirot compares both, gives verdict
+duel fix/WEB-7373        # spins Pat + Mat in parallel on same task
+poirot --compare         # Poirot compares both diffs, gives verdict
 wt-clean pat mat nikke
 ```
 
@@ -91,19 +109,59 @@ wt-clean pat mat nikke
 
 | Command | Description |
 |---|---|
-| `watson -t <title>` | Map codebase context for a ticket (Gemini Flash) |
-| `nikke -t <title>` | Investigate ticket from clipboard (Watson runs first) |
-| `nikke --no-watson -t <title>` | Investigate without Watson pre-mapping |
-| `pat <branch> "task"` | Claude worker on a new branch |
-| `pat -n <branch>` | Claude worker, pulls Nikke's investigation |
-| `mat <branch> "task"` | Gemini Flash worker on a new branch |
-| `mat -n <branch>` | Gemini Flash worker, pulls Nikke's investigation |
-| `duel [-n] <branch>` | Spin Pat and Mat on the same task |
-| `poirot` | Review current worktree |
+| `watson <branch>` | Map codebase context (Gemini Flash, fast) |
+| `watson --claude <branch>` | Map codebase with Claude Haiku |
+| `watson -c` | Continue in previous Watson worktree |
+| `nikke <branch>` | Investigate ticket (Watson runs inline first) |
+| `nikke --gemini <branch>` | Nikke with Gemini |
+| `nikke -c` | Continue in previous Nikke/Watson worktree |
+| `pat <branch>` | Claude worker on new branch |
+| `pat -c` | Continue in previous Nikke/Watson worktree |
+| `mat <branch>` | Gemini Flash worker on new branch |
+| `mat -c` | Continue in previous Nikke/Watson worktree |
+| `duel <branch>` | Spin Pat and Mat on the same task |
+| `poirot` | Review branch vs main (committed + unstaged) |
+| `poirot --committed` | Review committed changes only |
 | `poirot --compare` | Compare Pat vs Mat, give verdict |
 | `roster` | Show active worktrees and status |
 | `goto <pat\|mat\|nikke>` | Jump to role's tmux window/worktree |
 | `wt-clean <role\|all>` | Remove worktrees after merge |
+
+## Context folder — `.ai-team/`
+
+All agents read from and write to `.ai-team/` in the worktree:
+
+```
+.ai-team/
+  context/
+    TICKET.md          — ticket written by the human
+    *.md, *.png        — architecture docs, screenshots
+  CONTEXT.md           — Watson's codebase map (relevant files, code paths)
+  INVESTIGATION.md     — Nikke's root cause analysis and recommended fix
+  REVIEW.md            — Poirot's review
+  FIX-SUMMARY.md       — Pat/Mat's summary of what changed and why
+  BLOCKED.md           — written when an agent hits a repeated failure
+```
+
+When a new worktree is created, `.ai-team/` is copied from main so existing
+context (TICKET.md, docs, CONTEXT.md) is available immediately.
+
+## Agent behavior
+
+**Ordered reading** — each agent reads context in a defined order:
+ticket → screenshots → architecture docs → CONTEXT.md → INVESTIGATION.md → AGENTS.md → personal skills.
+
+**Failure handling** — if a command fails 3 times in a row, Claude agents
+(`AskUserQuestion`) pause and wait for human input. Gemini agents print a
+message and stop. Pat's poirot review loop caps at 2 runs.
+
+**Free on finish** — Pat and Mat clear their tracking file when done.
+`roster` shows them as idle. The worktree stays open for review; only
+`wt-clean` removes it.
+
+**Watson caps** — Watson reads at most 5 files and runs one git log command.
+Designed to finish in 2-3 minutes. Use `watson --claude` to run Haiku instead
+of Gemini Flash.
 
 ## Editing workflow
 
@@ -111,7 +169,7 @@ Files are symlinked into `~/dev-system/`, `~/.claude/`, `~/.gemini/`. Edit
 them anywhere — the repo files are the live files.
 
 ```bash
-nvim ~/dev-system/skills/_work/conservative.md # via the symlink
+nvim ~/dev-system/skills/_work/conservative.md
 cd ~/code/dev-system
 git diff
 git add -A
@@ -129,46 +187,19 @@ git pull
 
 ## Agent permissions
 
-`.claude/settings.json` at the repo root restricts agents to a safe subset
-of tools — no shell access. This applies only to this repo and does not
-touch your global `~/.claude/` settings.
+Each worktree gets `.claude/settings.json` written at dispatch time. Agents have:
 
-Agents get narrow replacements through the **safe-tools MCP server**
-(configured globally via your dotfiles — see `env/dot-claude/safe_tools_mcp.py`):
+- File tools: `Read`, `Write`, `Edit`, `Glob`, `Grep`
+- Safe bash: `grep`, `find`, `ls`, `git ls-tree`
+- Safe-tools MCP: `run_tests`, `run_install`, `run_linter`, `git_status`,
+  `git_log`, `git_diff`, `git_commit`, `list_dir`, `check_tool`
+- User input: `AskUserQuestion`
 
-| Tool | What it does |
-|---|---|
-| `git_status` | `git status --porcelain -b` |
-| `git_log` | `git log --oneline` (max 50) |
-| `git_diff` | `git diff` or `git diff --staged` |
-| `git_commit` | `git add -A && git commit -m` |
-| `run_tests` | auto-detects pytest / npm / cargo / go / make |
-| `run_install` | auto-detects uv / npm / cargo / go |
-| `run_linter` | auto-detects ruff / biome / eslint |
-| `list_dir` | filenames only, no file contents |
-| `check_tool` | `which <name>` |
-
-To opt a worktree back in to `Bash`, add `.claude/settings.json` there:
+`Bash` (arbitrary shell) is denied. To opt a worktree into full shell access:
 
 ```json
 { "permissions": { "allow": ["Bash"] } }
 ```
-
-### Going global
-
-You can promote these same restrictions to `~/.claude/settings.json` to
-cover every project on your machine. Benefits:
-
-- **Default-safe** — new repos and one-off sessions are restricted without
-  any per-project setup
-- **Consistent agent behavior** — Pat, Nikke, and any ad-hoc Claude session
-  all operate under the same rules
-- **Explicit opt-in for shell access** — projects that need `Bash` declare it
-  in their own `.claude/settings.json`, making the permission visible in the repo
-
-Copy the permission block from this file's `.claude/settings.json` into your
-`~/.claude/settings.json` to get started. Add the `mcpServers` stanza from
-`claude/safe_tools_mcp.py` if you want the safe-tools available everywhere.
 
 ## Design decisions
 
@@ -181,14 +212,14 @@ intentional: agents are a tool, not a background daemon. You should always
 know what's running and why.
 
 **Roles, not prompts** — each agent has a fixed role with a fixed output
-contract (`INVESTIGATION.md`, `CONTEXT.md`, `REVIEW.md`). Separation of
-concerns means Nikke never writes code and Pat never investigates. Cleaner
-handoffs, easier to spot when an agent goes off-script.
+contract (`INVESTIGATION.md`, `CONTEXT.md`, `REVIEW.md`, `FIX-SUMMARY.md`).
+Nikke never writes code. Pat never investigates. Clean handoffs.
 
-**Permission by default, not by exception** — agents run with `Bash` denied
-at the repo level. Shell access is an explicit opt-in per project, not the
-default. The safe-tools MCP server provides git and test operations without
-granting arbitrary execution.
+**Permission by default, not by exception** — agents run with `Bash` denied.
+Shell access is explicit opt-in per project, not the default.
+
+**`.ai-team/` not `.vscode/`** — context folder is tool-agnostic and doesn't
+pollute IDE config directories.
 
 ## Skill boundary
 
@@ -196,11 +227,7 @@ granting arbitrary execution.
 Those belong in each repo's `AGENTS.md`. Skills only describe behavior
 preferences and stack-generic patterns.
 
-When tempted to add work-specific knowledge to a skill, push it to the
-team's `AGENTS.md` instead — it belongs where teammates can read it.
-
 ## Portraits
 
 Drop PNGs into `portraits/` named `pat.png`, `mat.png`, `nikke.png`,
-`poirot.png`, `watson.png`. Empty placeholders are fine — scripts fall back
-to bold text until real images are present.
+`poirot.png`, `watson.png`. Scripts fall back to bold text if missing.
