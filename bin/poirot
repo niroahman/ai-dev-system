@@ -1,5 +1,6 @@
 #!/bin/bash
-# Usage: poirot                        # review current worktree
+# Usage: poirot                        # review current worktree (committed + unstaged)
+#        poirot --committed            # review committed changes only
 #        poirot /path/to/wt            # review specific worktree
 #        poirot . "focus on auth"      # with extra instructions
 #        poirot --compare              # compare Pat vs Mat (reads ~/.mat_last_worktree)
@@ -8,10 +9,14 @@ set -e
 source "$HOME/dev-system/bin/_lib.sh"
 
 compare=0
-if [ "$1" = "--compare" ]; then
-  compare=1
-  shift
-fi
+committed_only=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --compare) compare=1; shift ;;
+    --committed) committed_only=1; shift ;;
+    *) break ;;
+  esac
+done
 
 dir="${1:-$(pwd)}"
 extra_instructions="${2:-}"
@@ -31,8 +36,8 @@ if [ "$compare" = "1" ]; then
     exit 1
   fi
 
-  diff_pat=$(git diff "$base"...HEAD)
-  diff_mat=$(git -C "$mat_dir" diff "$base"...HEAD)
+  diff_pat=$(git diff "$base"...HEAD; [ "$committed_only" = "0" ] && git diff || true)
+  diff_mat=$(git -C "$mat_dir" diff "$base"...HEAD; [ "$committed_only" = "0" ] && git -C "$mat_dir" diff || true)
   task=$(cat .agent-task.md 2>/dev/null || echo "(no task file)")
   investigation=$(cat .ai-team/INVESTIGATION.md 2>/dev/null || echo "")
   repo_agents=$(cat AGENTS.md 2>/dev/null || echo "(no repo AGENTS.md)")
@@ -107,7 +112,7 @@ Be terse. No preamble. Skip empty sections."
 fi
 
 # Standard single-worktree review
-diff=$(git diff "$base"...HEAD)
+diff=$(git diff "$base"...HEAD; [ "$committed_only" = "0" ] && git diff || true)
 task=$(cat .agent-task.md 2>/dev/null || echo "(no task file)")
 context=$(cat .agent-context.md 2>/dev/null || echo "(no context)")
 repo_agents=$(cat AGENTS.md 2>/dev/null || echo "(no repo AGENTS.md)")
