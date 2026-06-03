@@ -149,14 +149,20 @@ write_claude_settings() {
 EOF
 }
 
-# wait_for_agent <session_prefix>
-# Block until no tmux session matches the prefix. No-op outside tmux
-# (launch_tmux already blocks when not in a session).
+# wait_for_agent <session_prefix> [tracking_role]
+# Block until tmux session is gone OR tracking file is cleared.
+# tracking_role defaults to lowercase of prefix (Pat→pat, Nikke→nikke).
 wait_for_agent() {
   local prefix="$1"
+  local role="${2:-$(echo "$prefix" | tr '[:upper:]' '[:lower:]')}"
+  local tracking="$HOME/.${role}_last_worktree"
   [ -z "$TMUX" ] && return
   printf "⏳  Waiting for \033[1;36m%s\033[0m to finish...\n" "$prefix"
-  while tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -qi "^${prefix}-"; do
+  while true; do
+    # Done if tmux session gone
+    tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -qi "^${prefix}-" || break
+    # Done if tracking file cleared (agent marked itself free)
+    [ ! -f "$tracking" ] && break
     sleep 3
   done
 }
@@ -169,8 +175,8 @@ launch_tmux() {
   local cmd="$3"
 
   if [ -n "$TMUX" ]; then
-    tmux new-session -d -s "$window_name" -c "$dir" $cmd
-    tmux set-option -t "$window_name" remain-on-exit off 2>/dev/null || true
+    tmux new-session -d -s "$window_name" -c "$dir" \
+      bash -c "$cmd; tmux kill-session -t '$window_name'"
     printf "🪟  Session \033[1;33m%s\033[0m started\n" "$window_name"
   else
     tmux new-session -s "$window_name" -c "$dir" $cmd

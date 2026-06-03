@@ -14,12 +14,12 @@ if [ "$_current_session" = "$TED_SESSION" ] || [ "$_current_session" = "$BEARD_S
   : # already inside a coach session, proceed
 elif ! tmux has-session -t "$TED_SESSION" 2>/dev/null; then
   printf "🎽  Starting TED — AI-team coach\n"
-  tmux new-session -d -s "$TED_SESSION" "$0" "$@"
+  tmux new-session -d -s "$TED_SESSION" -c "$(pwd)" "$0" "$@"
   tmux switch-client -t "$TED_SESSION"
   exit 0
 elif ! tmux has-session -t "$BEARD_SESSION" 2>/dev/null; then
   printf "🧔  TED is busy — starting BEARD\n"
-  tmux new-session -d -s "$BEARD_SESSION" "$0" "$@"
+  tmux new-session -d -s "$BEARD_SESSION" -c "$(pwd)" "$0" "$@"
   tmux switch-client -t "$BEARD_SESSION"
   exit 0
 else
@@ -155,6 +155,8 @@ ted_next() {
   else printf "\n  \033[0;35m  ✦  ✦  ✦  handoff →\033[0m \033[1;36m%s\033[0m \033[0;35m←  ✦  ✦  ✦\033[0m\n\n" "$1"; fi
 }
 ted_complete() {
+  local wt
+  wt=$(cat "$HOME/.pat_done_worktree" 2>/dev/null || cat "$HOME/.mat_done_worktree" 2>/dev/null || echo "")
   printf '\n'
   if [ -n "$TOILET" ]; then
     toilet -f term --gay "DONE!" 2>/dev/null | { [ -n "$LOLCAT" ] && lolcat -f 2>/dev/null || cat; }
@@ -163,23 +165,42 @@ ted_complete() {
     [ -n "$LOLCAT" ] && printf '\n' | lolcat -f 2>/dev/null || printf '\n'
   fi
   printf "  \033[2;37m%s  ·  %s\033[0m\n\n" "$*" "$(ted_ts)"
+  if [ -n "$wt" ]; then
+    printf "  \033[1;37mWorktree:\033[0m \033[1;36m%s\033[0m\n" "$wt"
+    printf "  \033[0;37mcd '%s' && poirot\033[0m\n\n" "$wt"
+  fi
+  printf "\033[0;37m  Session stays open. Run \033[1;37mgoto ted\033[0;37m to return here.\033[0m\n\n"
 }
 
 # --- Launch ---
 case "${choice:0:20}" in
   '🗺️  Full Recon'*)
     ted_log "Full Recon — Watson → Nikke → Pat  [$branch]"
+    mkdir -p ".ai-team/context"
+    [ ! -f ".ai-team/context/TICKET.md" ] && cat > ".ai-team/context/TICKET.md" <<'EOF'
+# Title
+
+## Description
+
+## Steps to reproduce
+
+## Expected vs actual
+
+## Notes
+EOF
+    printf "\n📝  \033[1;37mOpen TICKET.md, save and exit to continue...\033[0m\n"
+    ${EDITOR:-vim} ".ai-team/context/TICKET.md"
     ted_start "Watson" "mapping codebase inline"
     watson --inline "$(pwd)"
     ted_done "Watson" "WATSON_MAP.md written"
     ted_next "Nikke"
     ted_start "Nikke" "investigating ticket"
-    nikke "$branch"
+    nikke --no-watson "$branch"
     wait_for_agent "Nikke"
     ted_done "Nikke" "INVESTIGATION.md written"
     ted_next "Pat"
     ted_start "Pat" "implementing fix"
-    pat -c
+    pat --no-watson -c
     wait_for_agent "Pat"
     ted_done "Pat" "FIX-SUMMARY.md written — ready for review"
     ted_complete "Run: poirot"
@@ -192,7 +213,7 @@ case "${choice:0:20}" in
     ted_done "Nikke" "INVESTIGATION.md written"
     ted_next "Pat"
     ted_start "Pat" "implementing fix"
-    pat -c
+    pat --no-watson -c
     wait_for_agent "Pat"
     ted_done "Pat" "FIX-SUMMARY.md written — ready for review"
     ted_complete "Run: poirot"

@@ -10,11 +10,13 @@ source "$HOME/dev-system/bin/_lib.sh"
 
 cont=0
 wt_path=""
+skip_watson=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -c) cont=1; shift ;;
     -w) wt_path="$2"; shift 2 ;;
+    --no-watson) skip_watson=1; shift ;;
     *) break ;;
   esac
 done
@@ -76,7 +78,7 @@ else
 fi
 
 # --- Watson maps the codebase first ---
-run_watson_inline "$dir"
+[ "$skip_watson" = "0" ] && run_watson_inline "$dir"
 
 # --- Write task spec ---
 # Using printf to avoid heredoc quoting issues with variables
@@ -144,6 +146,7 @@ cp "$HOME/dev-system/portraits/$(echo "$ROLE_NAME" | tr '[:upper:]' '[:lower:]')
 rm -f "$dir/.investigate-prompt.md"
 write_claude_settings "$dir"
 track_worktree "$(basename "$0")" "$dir"
+echo "$dir" > "$HOME/.$(basename "$0")_done_worktree"
 
 # --- Launch ---
 printf "\n🔨 \033[1;32m%s\033[0m is taking on \033[1;36m%s\033[0m\n\n" "$ROLE_NAME" "$(basename "$dir")"

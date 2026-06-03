@@ -10,12 +10,14 @@ source "$HOME/dev-system/bin/_lib.sh"
 cont=0
 wt_path=""
 agent="claude"
+skip_watson=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -c) cont=1; shift ;;
     -w) wt_path="$2"; shift 2 ;;
     --gemini) agent="gemini"; shift ;;
+    --no-watson) skip_watson=1; shift ;;
     *) break ;;
   esac
 done
@@ -61,8 +63,8 @@ else
   setup_worktree "$dir" "$repo_root"
 fi
 
-# --- Watson runs inline first ---
-run_watson_inline "$dir"
+# --- Watson runs inline first (unless caller already ran it) ---
+[ "$skip_watson" = "0" ] && run_watson_inline "$dir"
 
 # --- Write investigation prompt ---
 {
