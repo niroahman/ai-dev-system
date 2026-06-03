@@ -164,6 +164,7 @@ launch_tmux() {
 
   if [ -n "$TMUX" ]; then
     tmux new-session -d -s "$window_name" -c "$dir" $cmd
+    tmux set-option -t "$window_name" remain-on-exit off 2>/dev/null || true
     printf "🪟  Session \033[1;33m%s\033[0m started\n" "$window_name"
   else
     tmux new-session -s "$window_name" -c "$dir" $cmd

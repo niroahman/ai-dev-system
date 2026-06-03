@@ -14,11 +14,13 @@ if [ "$_current_session" = "$TED_SESSION" ] || [ "$_current_session" = "$BEARD_S
   : # already inside a coach session, proceed
 elif ! tmux has-session -t "$TED_SESSION" 2>/dev/null; then
   printf "🎽  Starting TED — AI-team coach\n"
-  tmux new-session -s "$TED_SESSION" "$0" "$@"
+  tmux new-session -d -s "$TED_SESSION" "$0" "$@"
+  tmux switch-client -t "$TED_SESSION"
   exit 0
 elif ! tmux has-session -t "$BEARD_SESSION" 2>/dev/null; then
   printf "🧔  TED is busy — starting BEARD\n"
-  tmux new-session -s "$BEARD_SESSION" "$0" "$@"
+  tmux new-session -d -s "$BEARD_SESSION" "$0" "$@"
+  tmux switch-client -t "$BEARD_SESSION"
   exit 0
 else
   printf "❌  Both TED and BEARD are busy. Finish a flow first.\n"
