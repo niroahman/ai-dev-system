@@ -169,13 +169,12 @@ ted_complete() {
 case "${choice:0:20}" in
   '🗺️  Full Recon'*)
     ted_log "Full Recon — Watson → Nikke → Pat  [$branch]"
-    ted_start "Watson" "mapping codebase"
-    watson "$branch"
-    wait_for_agent "Watson"
+    ted_start "Watson" "mapping codebase inline"
+    watson --inline "$(pwd)"
     ted_done "Watson" "WATSON_MAP.md written"
     ted_next "Nikke"
     ted_start "Nikke" "investigating ticket"
-    nikke -c
+    nikke "$branch"
     wait_for_agent "Nikke"
     ted_done "Nikke" "INVESTIGATION.md written"
     ted_next "Pat"
