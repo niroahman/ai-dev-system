@@ -38,20 +38,20 @@ resolve_named_role() {
 }
 
 # setup_worktree <dir> <main_root>
-# Copy .vscode/ai/context/ from main to worktree, then open $EDITOR for TICKET.md.
+# Copy .ai-team/context/ from main to worktree, then open $EDITOR for TICKET.md.
 setup_worktree() {
   local dir="$1"
   local main_root="$2"
 
-  mkdir -p "$dir/.vscode/ai/context"
+  mkdir -p "$dir/.ai-team/context"
 
-  if [ -d "$main_root/.vscode/ai/context" ]; then
-    cp -r "$main_root/.vscode/ai/context/"* "$dir/.vscode/ai/context/" 2>/dev/null || true
+  if [ -d "$main_root/.ai-team" ]; then
+    cp -r "$main_root/.ai-team/"* "$dir/.ai-team/" 2>/dev/null || true
   fi
 
   # Ensure TICKET.md exists
-  if [ ! -f "$dir/.vscode/ai/context/TICKET.md" ]; then
-    cat > "$dir/.vscode/ai/context/TICKET.md" <<'EOF'
+  if [ ! -f "$dir/.ai-team/context/TICKET.md" ]; then
+    cat > "$dir/.ai-team/context/TICKET.md" <<'EOF'
 # Title
 
 ## Description
@@ -64,7 +64,7 @@ setup_worktree() {
 EOF
   fi
 
-  ${EDITOR:-vim} "$dir/.vscode/ai/context/TICKET.md"
+  ${EDITOR:-vim} "$dir/.ai-team/context/TICKET.md"
 }
 
 # kill_role_session <role>

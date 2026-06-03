@@ -34,8 +34,8 @@ if [ -n "$inline_dir" ]; then
     cat <<'WATSONINLINE'
 # Context
 
-Read .vscode/ai/context/TICKET.md for the ticket. Read any images there.
-Your only job is to write .vscode/ai/CONTEXT.md. Be fast. Stop early.
+Read .ai-team/context/TICKET.md for the ticket. Read any images there.
+Your only job is to write .ai-team/CONTEXT.md. Be fast. Stop early.
 
 Steps (strict order, strict caps):
 1. Read the ticket. Extract 3-5 key terms (component names, function names, file hints).
@@ -45,7 +45,7 @@ Steps (strict order, strict caps):
 5. Skim test directory names for matches. Do not read test files.
 6. STOP. Write CONTEXT.md now.
 
-Write .vscode/ai/CONTEXT.md with:
+Write .ai-team/CONTEXT.md with:
 
 ## Relevant files
 Each file with brief reason why relevant. List files you did not read too.
@@ -70,7 +70,7 @@ Be terse — this is a map, not an essay. Target: done in 2-3 minutes.
 WATSONINLINE
   } > "$inline_dir/.watson-prompt.md"
 
-  mkdir -p "$inline_dir/.vscode/ai"
+  mkdir -p "$inline_dir/.ai-team"
   (cd "$inline_dir" && gemini --model flash -p "Read .watson-prompt.md and follow it exactly." -y 2>/dev/null) || true
   printf "✅  Watson done\n"
   exit 0
@@ -123,8 +123,8 @@ fi
   cat <<'WATSONBODY'
 # Context
 
-Read .vscode/ai/context/TICKET.md for the ticket. Read any images there.
-Your only job is to write .vscode/ai/CONTEXT.md. Be fast. Stop early.
+Read .ai-team/context/TICKET.md for the ticket. Read any images there.
+Your only job is to write .ai-team/CONTEXT.md. Be fast. Stop early.
 
 Steps (strict order, strict caps):
 1. Read the ticket. Extract 3-5 key terms (component names, function names, file hints).
@@ -134,7 +134,7 @@ Steps (strict order, strict caps):
 5. Skim test directory names for matches. Do not read test files.
 6. STOP. Write CONTEXT.md now.
 
-Write .vscode/ai/CONTEXT.md with:
+Write .ai-team/CONTEXT.md with:
 
 ## Relevant files
 Each file with brief reason why relevant. List files you did not read too.
@@ -160,8 +160,8 @@ WATSONBODY
 } > "$dir/.watson-prompt.md"
 
 # --- Housekeeping ---
-mkdir -p "$dir/.vscode/ai"
-cp "$HOME/dev-system/portraits/watson.png" "$dir/.vscode/ai/" 2>/dev/null || true
+mkdir -p "$dir/.ai-team"
+cp "$HOME/dev-system/portraits/watson.png" "$dir/.ai-team/" 2>/dev/null || true
 write_claude_settings "$dir"
 track_worktree "watson" "$dir"
 
