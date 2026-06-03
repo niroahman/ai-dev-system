@@ -70,7 +70,7 @@ ${summary_mat:-(no summary)}
 MAT'S DIFF:
 $diff_mat
 
-Write .ai-team/REVIEW.md with:
+Write your review to stdout in this exact structure:
 
 ## Verdict
 One sentence: which solution to use and why.

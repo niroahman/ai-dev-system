@@ -72,14 +72,13 @@ run_watson_inline "$dir"
   cat <<'NIKKEBODY'
 # Context
 
-You are working in a worktree. The following files may exist:
-
-.ai-team/context/TICKET.md       — ticket written by the human, + any images
-.ai-team/context/*.md, *.png     — architecture docs, diagrams, permanent context
-.ai-team/CONTEXT.md              — Watson's codebase map (relevant files, code paths)
-
-Read all available context before starting. Read any images in context/.
-.agent-context.md for personal skills. AGENTS.md for repo conventions.
+Read in this order before starting:
+1. .ai-team/context/TICKET.md — the ticket
+2. .ai-team/context/*.png, *.jpg — screenshots (often contain info the text omits)
+3. .ai-team/context/*.md — architecture docs
+4. .ai-team/CONTEXT.md — Watson's codebase map
+5. AGENTS.md — repo conventions
+6. .agent-context.md — personal skills
 
 # Investigation
 
