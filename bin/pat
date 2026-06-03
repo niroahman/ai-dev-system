@@ -105,12 +105,21 @@ Rules:
 - Run tests after making changes.
 - Do not leave debug code, TODOs, or commented-out blocks.
 
+# Failure handling
+
+If any command fails three times in a row (tests, linter, installs):
+- STOP. Do not retry.
+- Use AskUserQuestion to tell the human what failed and ask how to proceed.
+- Wait for their answer before continuing.
+
+Do not loop. Do not try workarounds. Blocked is a valid state.
+
 # Review cycle
 
 When you have finished the fix:
 1. Run `poirot` from the shell. Read .ai-team/REVIEW.md.
 2. Address every issue Poirot raised. Fix the code.
-3. Run `poirot` again. Verify no remaining issues.
+3. Run `poirot` once more — max 2 runs total. If issues persist, use AskUserQuestion to report what remains and ask how to proceed.
 4. Write .ai-team/FIX-SUMMARY.md with:
 
 ## What changed

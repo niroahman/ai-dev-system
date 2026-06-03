@@ -87,7 +87,8 @@ Read in this order before starting:
 3. Reproduce the issue mentally by tracing through the code.
 4. Form hypotheses about root cause. Check each one in the code.
 5. If you need to run tests or add temporary logging to verify, do so —
-   this is a throwaway worktree.
+   this is a throwaway worktree. If a command fails three times, stop trying it. Use AskUserQuestion
+   to report what failed, then note it as unverified and move on.
 
 Write .ai-team/INVESTIGATION.md with:
 

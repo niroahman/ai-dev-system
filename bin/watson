@@ -4,18 +4,21 @@
 #   watson -c                    # continue in previous worktree
 #   watson -c -w /path/to/wt     # continue in specific worktree
 #   watson --inline <dir>        # run sync in existing dir (no tmux)
+#   watson --claude WEB-7373     # use Claude Haiku instead of Gemini Flash
 set -e
 source "$HOME/dev-system/bin/_lib.sh"
 
 cont=0
 wt_path=""
 inline_dir=""
+use_claude=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -c) cont=1; shift ;;
     -w) wt_path="$2"; shift 2 ;;
     --inline) inline_dir="$2"; shift 2 ;;
+    --claude) use_claude=1; shift ;;
     *) break ;;
   esac
 done
@@ -71,7 +74,11 @@ WATSONINLINE
   } > "$inline_dir/.watson-prompt.md"
 
   mkdir -p "$inline_dir/.ai-team"
-  (cd "$inline_dir" && gemini --model flash -p "Read .watson-prompt.md and follow it exactly." -y 2>/dev/null) || true
+  if [ "$use_claude" = "1" ]; then
+    (cd "$inline_dir" && claude --model claude-haiku-4-5-20251001 "Read .watson-prompt.md and follow it exactly.") || true
+  else
+    (cd "$inline_dir" && gemini --model flash -p "Read .watson-prompt.md and follow it exactly." -y 2>/dev/null) || true
+  fi
   printf "✅  Watson done\n"
   exit 0
 fi
@@ -168,4 +175,8 @@ track_worktree "watson" "$dir"
 # --- Launch ---
 printf "\n🗺️  \033[1;36mWatson\033[0m is mapping: \033[1;36m%s\033[0m\n\n" "$(basename "$dir")"
 
-launch_tmux "$dir" "$window_name" "gemini --model flash \"Read .watson-prompt.md and follow it exactly.\""
+if [ "$use_claude" = "1" ]; then
+  launch_tmux "$dir" "$window_name" "claude --model claude-haiku-4-5-20251001 \"Read .watson-prompt.md and follow it exactly.\""
+else
+  launch_tmux "$dir" "$window_name" "gemini --model flash \"Read .watson-prompt.md and follow it exactly.\""
+fi
