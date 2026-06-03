@@ -5,7 +5,7 @@
 #   MODEL_WATSON="eu.anthropic.claude-haiku-4-5-20251001-v1:0"
 #   MODEL_PAT="eu.anthropic.claude-sonnet-4-6"
 
-MODEL_WATSON="claude-haiku-4-5"
+MODEL_WATSON=""  # empty = use claude default model
 MODEL_PAT="claude"          # empty = claude default model
 MODEL_NIKKE="claude"        # empty = claude default model
 MODEL_POIROT="claude"       # empty = claude default model

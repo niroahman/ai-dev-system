@@ -76,7 +76,7 @@ Read in this order before starting:
 1. .ai-team/context/TICKET.md — the ticket
 2. .ai-team/context/*.png, *.jpg — screenshots (often contain info the text omits)
 3. .ai-team/context/*.md — architecture docs
-4. .ai-team/CONTEXT.md — Watson's codebase map
+4. .ai-team/WATSON_MAP.md — Watson's codebase map
 5. AGENTS.md — repo conventions
 6. .agent-context.md — personal skills
 

@@ -18,7 +18,7 @@ never interfere with each other or your working tree.
 
 ```
 ticket
-  └─▶ Watson   maps relevant files → .ai-team/CONTEXT.md      (Gemini Flash)
+  └─▶ Watson   maps relevant files → .ai-team/WATSON_MAP.md      (Gemini Flash)
         └─▶ Nikke  investigates root cause → INVESTIGATION.md  (Claude)
               └─▶ Pat / Mat  implements fix on a branch        (Claude / Gemini)
                     └─▶ Poirot  reviews branch vs main         (Claude)
@@ -136,7 +136,7 @@ All agents read from and write to `.ai-team/` in the worktree:
   context/
     TICKET.md          — ticket written by the human
     *.md, *.png        — architecture docs, screenshots
-  CONTEXT.md           — Watson's codebase map (relevant files, code paths)
+  WATSON_MAP.md           — Watson's codebase map (relevant files, code paths)
   INVESTIGATION.md     — Nikke's root cause analysis and recommended fix
   REVIEW.md            — Poirot's review
   FIX-SUMMARY.md       — Pat/Mat's summary of what changed and why
@@ -144,12 +144,12 @@ All agents read from and write to `.ai-team/` in the worktree:
 ```
 
 When a new worktree is created, `.ai-team/` is copied from main so existing
-context (TICKET.md, docs, CONTEXT.md) is available immediately.
+context (TICKET.md, docs, WATSON_MAP.md) is available immediately.
 
 ## Agent behavior
 
 **Ordered reading** — each agent reads context in a defined order:
-ticket → screenshots → architecture docs → CONTEXT.md → INVESTIGATION.md → AGENTS.md → personal skills.
+ticket → screenshots → architecture docs → WATSON_MAP.md → INVESTIGATION.md → AGENTS.md → personal skills.
 
 **Failure handling** — if a command fails 3 times in a row, Claude agents
 (`AskUserQuestion`) pause and wait for human input. Gemini agents print a
@@ -212,7 +212,7 @@ intentional: agents are a tool, not a background daemon. You should always
 know what's running and why.
 
 **Roles, not prompts** — each agent has a fixed role with a fixed output
-contract (`INVESTIGATION.md`, `CONTEXT.md`, `REVIEW.md`, `FIX-SUMMARY.md`).
+contract (`INVESTIGATION.md`, `WATSON_MAP.md`, `REVIEW.md`, `FIX-SUMMARY.md`).
 Nikke never writes code. Pat never investigates. Clean handoffs.
 
 **Permission by default, not by exception** — agents run with `Bash` denied.

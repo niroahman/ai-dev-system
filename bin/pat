@@ -89,7 +89,7 @@ Read in this order before starting:
 1. .ai-team/context/TICKET.md — the ticket
 2. .ai-team/context/*.png, *.jpg — screenshots
 3. .ai-team/context/*.md — architecture docs
-4. .ai-team/CONTEXT.md — Watson's codebase map (relevant files, code paths)
+4. .ai-team/WATSON_MAP.md — Watson's codebase map (relevant files, code paths)
 5. .ai-team/INVESTIGATION.md — Nikke's root cause analysis and recommended fix
 6. AGENTS.md — repo conventions (follow these strictly)
 7. .agent-context.md — personal skills
@@ -101,7 +101,7 @@ Implement the fix described in the ticket and investigation.
 Rules:
 - Follow AGENTS.md conventions for code style, testing, and patterns.
 - Stay in scope — only change what is needed for the fix.
-- Use the files Watson identified in CONTEXT.md as your starting point.
+- Use the files Watson identified in WATSON_MAP.md as your starting point.
 - Run tests after making changes.
 - Do not leave debug code, TODOs, or commented-out blocks.
 

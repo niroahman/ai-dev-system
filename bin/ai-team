@@ -172,7 +172,7 @@ case "${choice:0:20}" in
     ted_start "Watson" "mapping codebase"
     watson "$branch"
     wait_for_agent "Watson"
-    ted_done "Watson" "CONTEXT.md written"
+    ted_done "Watson" "WATSON_MAP.md written"
     ted_next "Nikke"
     ted_start "Nikke" "investigating ticket"
     nikke -c
@@ -225,7 +225,7 @@ case "${choice:0:20}" in
     ted_start "Watson" "mapping codebase"
     watson "$branch"
     wait_for_agent "Watson"
-    ted_done "Watson" "CONTEXT.md written"
+    ted_done "Watson" "WATSON_MAP.md written"
     ;;
   *) printf 'Unknown: %s\n' "$choice"; exit 1 ;;
 esac

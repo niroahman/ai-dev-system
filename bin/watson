@@ -38,7 +38,7 @@ if [ -n "$inline_dir" ]; then
 # Context
 
 Read .ai-team/context/TICKET.md for the ticket. Read any images there.
-Your only job is to write .ai-team/CONTEXT.md. Be fast. Stop early.
+Your only job is to write .ai-team/WATSON_MAP.md. Be fast. Stop early.
 
 Steps (strict order, strict caps):
 1. Read the ticket. Extract 3-5 key terms (component names, function names, file hints).
@@ -46,9 +46,9 @@ Steps (strict order, strict caps):
 3. Read at most 5 files. Pick the most central ones only.
 4. Run ONE git command across all relevant files: git log --oneline -15 -- <file1> <file2> ...
 5. Skim test directory names for matches. Do not read test files.
-6. STOP. Write CONTEXT.md now.
+6. STOP. Write WATSON_MAP.md now.
 
-Write .ai-team/CONTEXT.md with:
+Write .ai-team/WATSON_MAP.md with:
 
 ## Relevant files
 Each file with brief reason why relevant. List files you did not read too.
@@ -77,7 +77,8 @@ WATSONINLINE
   if [ "$use_gemini" = "1" ]; then
     (cd "$inline_dir" && ${MODEL_WATSON_GEMINI:-gemini --model flash} -p "Read .watson-prompt.md and follow it exactly." -y 2>/dev/null) || true
   else
-    (cd "$inline_dir" && claude --model "${MODEL_WATSON:-claude-haiku-4-5}" "Read .watson-prompt.md and follow it exactly.") || true
+    _wmodel=${MODEL_WATSON:-}
+    (cd "$inline_dir" && claude ${_wmodel:+--model "$_wmodel"} -p "Read .watson-prompt.md and follow it exactly." --permission-mode bypassPermissions 2>/dev/null) || true
   fi
   printf "✅  Watson done\n"
   exit 0
@@ -131,7 +132,7 @@ fi
 # Context
 
 Read .ai-team/context/TICKET.md for the ticket. Read any images there.
-Your only job is to write .ai-team/CONTEXT.md. Be fast. Stop early.
+Your only job is to write .ai-team/WATSON_MAP.md. Be fast. Stop early.
 
 Steps (strict order, strict caps):
 1. Read the ticket. Extract 3-5 key terms (component names, function names, file hints).
@@ -139,9 +140,9 @@ Steps (strict order, strict caps):
 3. Read at most 5 files. Pick the most central ones only.
 4. Run ONE git command across all relevant files: git log --oneline -15 -- <file1> <file2> ...
 5. Skim test directory names for matches. Do not read test files.
-6. STOP. Write CONTEXT.md now.
+6. STOP. Write WATSON_MAP.md now.
 
-Write .ai-team/CONTEXT.md with:
+Write .ai-team/WATSON_MAP.md with:
 
 ## Relevant files
 Each file with brief reason why relevant. List files you did not read too.
@@ -178,5 +179,10 @@ printf "\n🗺️  \033[1;36mWatson\033[0m is mapping: \033[1;36m%s\033[0m\n\n" 
 if [ "$use_gemini" = "1" ]; then
   launch_tmux "$dir" "$window_name" "${MODEL_WATSON_GEMINI:-gemini --model flash} \"Read .watson-prompt.md and follow it exactly.\""
 else
-  launch_tmux "$dir" "$window_name" "claude --model \"${MODEL_WATSON:-claude-haiku-4-5}\" \"Read .watson-prompt.md and follow it exactly.\""
+  _wmodel=${MODEL_WATSON:-}
+  if [ -n "$_wmodel" ]; then
+    launch_tmux "$dir" "$window_name" "claude --model \"$_wmodel\" \"Read .watson-prompt.md and follow it exactly.\""
+  else
+    launch_tmux "$dir" "$window_name" "claude \"Read .watson-prompt.md and follow it exactly.\""
+  fi
 fi
