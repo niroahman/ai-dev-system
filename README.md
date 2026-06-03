@@ -49,7 +49,7 @@ in scope without polluting global prompts.
 | <img src="portraits/mat.png" width="60" /> | **Mat** | Worker | Gemini Flash |
 | <img src="portraits/nikke.png" width="60" /> | **Nikke** | Investigator | Claude |
 | <img src="portraits/poirot.png" width="60" /> | **Poirot** | Reviewer | Claude |
-| | **Watson** | Context gatherer | Gemini Flash / Claude Haiku |
+| | **Watson** | Context gatherer | Claude Haiku (default) / Gemini Flash |
 
 ## Setup on a new machine
 
@@ -109,8 +109,8 @@ wt-clean pat mat nikke
 
 | Command | Description |
 |---|---|
-| `watson <branch>` | Map codebase context (Gemini Flash, fast) |
-| `watson --claude <branch>` | Map codebase with Claude Haiku |
+| `watson <branch>` | Map codebase context (Claude Haiku) |
+| `watson --gemini <branch>` | Map codebase with Gemini Flash |
 | `watson -c` | Continue in previous Watson worktree |
 | `nikke <branch>` | Investigate ticket (Watson runs inline first) |
 | `nikke --gemini <branch>` | Nikke with Gemini |

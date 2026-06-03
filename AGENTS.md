@@ -32,7 +32,7 @@ install.sh     idempotent setup script — symlinks everything, sets PATH, gitig
 
 | Script | Role | Tool | Description |
 |---|---|---|---|
-| `watson` | Context gatherer | Gemini Flash (default) / Claude Haiku | Maps relevant files/code paths, writes CONTEXT.md. Runs inline inside nikke/pat/mat. |
+| `watson` | Context gatherer | Claude Haiku (default) / Gemini Flash | Maps relevant files/code paths, writes CONTEXT.md. Runs inline inside nikke/pat/mat. |
 | `nikke` | Investigator | Claude | Investigates tickets, writes INVESTIGATION.md. Calls Watson inline first. |
 | `pat` | Worker | Claude | Implements fixes/features. Clears its tracking on finish — free for next task. |
 | `mat` | Worker | Gemini Flash | Same as Pat, Gemini variant. Symlink to pat. |
@@ -104,8 +104,8 @@ wt-clean pat nikke
 
 | Command | Worktree | Description |
 |---------|----------|-------------|
-| `watson <branch>` | new | Map codebase. Default Gemini Flash. |
-| `watson --claude <branch>` | new | Map codebase with Claude Haiku. |
+| `watson <branch>` | new | Map codebase. Default Claude Haiku. |
+| `watson --gemini <branch>` | new | Map codebase with Gemini Flash. |
 | `watson -c` | previous | Continue in last Watson worktree. |
 | `nikke <branch>` | new | Investigate. Watson runs inline first. |
 | `nikke -c` | previous | Continue in last Nikke/Watson worktree. |
