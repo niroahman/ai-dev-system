@@ -1,0 +1,13 @@
+# dev-system model configuration
+# Override in config.local (gitignored) — e.g. for Bedrock regional prefixes.
+#
+# Example config.local:
+#   MODEL_WATSON="eu.anthropic.claude-haiku-4-5-20251001-v1:0"
+#   MODEL_PAT="eu.anthropic.claude-sonnet-4-6"
+
+MODEL_WATSON="claude-haiku-4-5"
+MODEL_PAT="claude"          # empty = claude default model
+MODEL_NIKKE="claude"        # empty = claude default model
+MODEL_POIROT="claude"       # empty = claude default model
+MODEL_MAT="gemini --model flash"
+MODEL_WATSON_GEMINI="gemini --model flash"

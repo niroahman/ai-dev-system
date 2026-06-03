@@ -75,9 +75,9 @@ WATSONINLINE
 
   mkdir -p "$inline_dir/.ai-team"
   if [ "$use_gemini" = "1" ]; then
-    (cd "$inline_dir" && gemini --model flash -p "Read .watson-prompt.md and follow it exactly." -y 2>/dev/null) || true
+    (cd "$inline_dir" && ${MODEL_WATSON_GEMINI:-gemini --model flash} -p "Read .watson-prompt.md and follow it exactly." -y 2>/dev/null) || true
   else
-    (cd "$inline_dir" && claude --model claude-haiku-4-5-20251001 "Read .watson-prompt.md and follow it exactly.") || true
+    (cd "$inline_dir" && claude --model "${MODEL_WATSON:-claude-haiku-4-5}" "Read .watson-prompt.md and follow it exactly.") || true
   fi
   printf "✅  Watson done\n"
   exit 0
@@ -176,7 +176,7 @@ track_worktree "watson" "$dir"
 printf "\n🗺️  \033[1;36mWatson\033[0m is mapping: \033[1;36m%s\033[0m\n\n" "$(basename "$dir")"
 
 if [ "$use_gemini" = "1" ]; then
-  launch_tmux "$dir" "$window_name" "gemini --model flash \"Read .watson-prompt.md and follow it exactly.\""
+  launch_tmux "$dir" "$window_name" "${MODEL_WATSON_GEMINI:-gemini --model flash} \"Read .watson-prompt.md and follow it exactly.\""
 else
-  launch_tmux "$dir" "$window_name" "claude --model claude-haiku-4-5-20251001 \"Read .watson-prompt.md and follow it exactly.\""
+  launch_tmux "$dir" "$window_name" "claude --model \"${MODEL_WATSON:-claude-haiku-4-5}\" \"Read .watson-prompt.md and follow it exactly.\""
 fi

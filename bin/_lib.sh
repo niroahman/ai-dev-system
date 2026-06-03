@@ -1,6 +1,12 @@
 #!/bin/bash
 # Shared helpers for dev-system scripts. Source, don't execute.
 
+# Load model config (config.local overrides config)
+_DEVSYS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=../config
+[ -f "$_DEVSYS_ROOT/config" ]       && source "$_DEVSYS_ROOT/config"
+[ -f "$_DEVSYS_ROOT/config.local" ] && source "$_DEVSYS_ROOT/config.local"
+
 # resolve_role <agent>
 # Sets globals: ROLE_NAME, ROLE_PORTRAIT_MD
 resolve_role() {

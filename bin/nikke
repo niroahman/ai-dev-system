@@ -127,4 +127,11 @@ track_worktree "nikke" "$dir"
 # --- Launch ---
 printf "\n🔍 \033[1;33mNikke\033[0m is on the case: \033[1;36m%s\033[0m\n\n" "$(basename "$dir")"
 
-launch_tmux "$dir" "$window_name" "$agent \"Read .investigate-prompt.md and follow it exactly.\""
+if [ "$agent" = "gemini" ]; then
+  launch_tmux "$dir" "$window_name" "${MODEL_MAT:-gemini --model flash} \"Read .investigate-prompt.md and follow it exactly.\""
+else
+  _nikke_model="${MODEL_NIKKE:-claude}"
+  [ "$_nikke_model" = "claude" ] \
+    && launch_tmux "$dir" "$window_name" "claude \"Read .investigate-prompt.md and follow it exactly.\"" \
+    || launch_tmux "$dir" "$window_name" "claude --model \"$_nikke_model\" \"Read .investigate-prompt.md and follow it exactly.\""
+fi

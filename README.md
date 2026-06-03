@@ -231,3 +231,13 @@ preferences and stack-generic patterns.
 
 Drop PNGs into `portraits/` named `pat.png`, `mat.png`, `nikke.png`,
 `poirot.png`, `watson.png`. Scripts fall back to bold text if missing.
+
+## TODO
+
+- [ ] Watson: expose `--model <id>` flag instead of hardcoded value
+- [ ] `ai-team`: BEARD coach portrait + quote set (Ted Lasso theme)
+- [ ] `poirot`: post REVIEW.md summary as PR comment (optional flag)
+- [ ] `roster`: show elapsed time since agent started, not worktree age
+- [ ] `wt-clean`: warn if branch not merged before removing
+- [ ] Stack skill files: `backend-go`, `backend-python` (currently stubs)
+- [ ] Neovim+tmux variant (Phase 3)

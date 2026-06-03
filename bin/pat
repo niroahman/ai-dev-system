@@ -147,7 +147,11 @@ track_worktree "$(basename "$0")" "$dir"
 # --- Launch ---
 printf "\n🔨 \033[1;32m%s\033[0m is taking on \033[1;36m%s\033[0m\n\n" "$ROLE_NAME" "$(basename "$dir")"
 
-agent_cmd="$agent"
-[ "$agent" = "gemini" ] && agent_cmd="gemini --model flash"
+if [ "$agent" = "gemini" ]; then
+  agent_cmd="${MODEL_MAT:-gemini --model flash}"
+else
+  _pat_model="${MODEL_PAT:-claude}"
+  [ "$_pat_model" = "claude" ] && agent_cmd="claude" || agent_cmd="claude --model \"$_pat_model\""
+fi
 
 launch_tmux "$dir" "$window_name" "$agent_cmd \"Read .agent-task.md and start the task.\""

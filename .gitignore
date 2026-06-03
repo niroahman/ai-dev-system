@@ -32,3 +32,4 @@ logs/
 *.tmp
 .cache/
 local.sh
+config.local
