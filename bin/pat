@@ -141,6 +141,7 @@ TASKBODY
 # --- Housekeeping ---
 mkdir -p "$dir/.ai-team"
 cp "$HOME/dev-system/portraits/$(echo "$ROLE_NAME" | tr '[:upper:]' '[:lower:]').png" "$dir/.ai-team/" 2>/dev/null || true
+rm -f "$dir/.investigate-prompt.md"
 write_claude_settings "$dir"
 track_worktree "$(basename "$0")" "$dir"
 
