@@ -1,29 +1,51 @@
 #!/bin/bash
-# Usage: goto pat | goto mat | goto nikke | goto ted
-# cd to the role's last worktree in current shell, or switch tmux window.
+# Usage: goto pat | goto mat | goto nikke | goto ted | goto ted wt
+# Switch to role's tmux session, or cd to its worktree.
+# goto ted wt / goto beard wt — open new window at the coach's active worktree.
 set -e
 
 TED_SESSION="AI-team-coach-TED"
 BEARD_SESSION="AI-team-coach-BEARD"
 
 role="${1:-}"
+sub="${2:-}"
 if [ -z "$role" ]; then
-  echo "Usage: goto <pat|mat|nikke|ted|beard>"
+  echo "Usage: goto <pat|mat|nikke|ted|beard> [wt]"
   exit 1
 fi
 
-# Coaches have no worktree — just switch to their session
+# Coaches
 if [ "$role" = "ted" ] || [ "$role" = "beard" ]; then
   [ "$role" = "ted" ] && target="$TED_SESSION" || target="$BEARD_SESSION"
+
+  # goto ted wt — jump to the worktree the coach is managing
+  if [ "$sub" = "wt" ]; then
+    wt=$(cat "$HOME/.${role}_wt" 2>/dev/null || echo "")
+    if [ -z "$wt" ] || [ ! -d "$wt" ]; then
+      printf "❌ No active worktree for %s\n" "$(echo "$role" | tr '[:lower:]' '[:upper:]')"
+      exit 1
+    fi
+    wt=$(cd "$wt" && pwd)
+    if [ -n "$TMUX" ]; then
+      printf "📂 Opening worktree: %s\n" "$wt"
+      tmux new-window -c "$wt"
+    else
+      cd "$wt"
+      printf "📂 Now in %s\n" "$wt"
+      exec $SHELL
+    fi
+    exit 0
+  fi
+
   if [ -n "$TMUX" ]; then
     if tmux has-session -t "$target" 2>/dev/null; then
       tmux switch-client -t "$target"
     else
-      printf "❌ %s is not running\n" "${role^^}"
+      printf "❌ %s is not running\n" "$(echo "$role" | tr '[:lower:]' '[:upper:]')"
       exit 1
     fi
   else
-    tmux attach-session -t "$target" 2>/dev/null || printf "❌ %s is not running\n" "${role^^}"
+    tmux attach-session -t "$target" 2>/dev/null || printf "❌ %s is not running\n" "$(echo "$role" | tr '[:lower:]' '[:upper:]')"
   fi
   exit 0
 fi

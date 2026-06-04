@@ -43,17 +43,26 @@ resolve_named_role() {
   fi
 }
 
-# setup_worktree <dir> <main_root>
-# Copy .ai-team/context/ from main to worktree, then open $EDITOR for TICKET.md.
+# setup_worktree <dir> <main_root> [--no-editor]
+# Copy .ai-team/ from main to worktree, optionally open $EDITOR for TICKET.md.
 setup_worktree() {
   local dir="$1"
   local main_root="$2"
+  local no_editor="${3:-}"
 
   mkdir -p "$dir/.ai-team/context"
 
-  if [ -d "$main_root/.ai-team" ]; then
-    cp -r "$main_root/.ai-team/"* "$dir/.ai-team/" 2>/dev/null || true
+  if [ -d "$main_root/.ai-team/context" ]; then
+    cp -r "$main_root/.ai-team/context/"* "$dir/.ai-team/context/" 2>/dev/null || true
   fi
+  # WATSON_MAP.md travels with context — agent output files do NOT
+  [ -f "$main_root/.ai-team/WATSON_MAP.md" ] && \
+    cp "$main_root/.ai-team/WATSON_MAP.md" "$dir/.ai-team/WATSON_MAP.md" 2>/dev/null || true
+  # Remove any stale agent output files that may have been copied
+  rm -f "$dir/.ai-team/INVESTIGATION.md" \
+        "$dir/.ai-team/REVIEW.md" \
+        "$dir/.ai-team/FIX-SUMMARY.md" \
+        "$dir/.ai-team/BLOCKED.md"
 
   # Ensure TICKET.md exists
   if [ ! -f "$dir/.ai-team/context/TICKET.md" ]; then
@@ -70,7 +79,7 @@ setup_worktree() {
 EOF
   fi
 
-  ${EDITOR:-vim} "$dir/.ai-team/context/TICKET.md"
+  [ "$no_editor" != "--no-editor" ] && ${EDITOR:-vim} "$dir/.ai-team/context/TICKET.md"
 }
 
 # kill_role_session <role>
@@ -149,20 +158,41 @@ write_claude_settings() {
 EOF
 }
 
-# wait_for_agent <session_prefix> [tracking_role]
-# Block until tmux session is gone OR tracking file is cleared.
-# tracking_role defaults to lowercase of prefix (Pat→pat, Nikke→nikke).
+# wait_for_agent <session_prefix> <output_file>
+# Block until output_file exists OR tmux session is gone.
+# For pat/mat also watches tracking file cleared.
 wait_for_agent() {
   local prefix="$1"
-  local role="${2:-$(echo "$prefix" | tr '[:upper:]' '[:lower:]')}"
+  local output_file="${2:-}"
+  local role
+  role=$(echo "$prefix" | tr '[:upper:]' '[:lower:]')
   local tracking="$HOME/.${role}_last_worktree"
   [ -z "$TMUX" ] && return
   printf "⏳  Waiting for \033[1;36m%s\033[0m to finish...\n" "$prefix"
   while true; do
+    # Done if output file written — wait 5s for final flush before killing
+    [ -n "$output_file" ] && [ -f "$output_file" ] && {
+      # Wait until file stops growing (agent finished writing)
+      local _prev_size=0 _curr_size
+      while true; do
+        _curr_size=$(wc -c < "$output_file" 2>/dev/null || echo 0)
+        [ "$_curr_size" -eq "$_prev_size" ] && [ "$_curr_size" -gt 0 ] && break
+        _prev_size=$_curr_size
+        sleep 2
+      done
+      sleep 3
+      local _sess
+      _sess=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -i "^${prefix}-" | head -1)
+      [ -n "$_sess" ] && tmux kill-session -t "$_sess" 2>/dev/null || true
+      rm -f "$HOME/.${role}_last_worktree"
+      break
+    }
     # Done if tmux session gone
     tmux list-sessions -F "#{session_name}" 2>/dev/null | grep -qi "^${prefix}-" || break
-    # Done if tracking file cleared (agent marked itself free)
-    [ ! -f "$tracking" ] && break
+    # pat/mat: tracking file cleared means done
+    if [ "$role" = "pat" ] || [ "$role" = "mat" ]; then
+      [ ! -f "$tracking" ] && break
+    fi
     sleep 3
   done
 }
@@ -176,7 +206,7 @@ launch_tmux() {
 
   if [ -n "$TMUX" ]; then
     tmux new-session -d -s "$window_name" -c "$dir" \
-      bash -c "$cmd; tmux kill-session -t '$window_name'"
+      bash -c "$cmd; tmux kill-session -t \"$window_name\" 2>/dev/null || true"
     printf "🪟  Session \033[1;33m%s\033[0m started\n" "$window_name"
   else
     tmux new-session -s "$window_name" -c "$dir" $cmd

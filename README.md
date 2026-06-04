@@ -70,38 +70,47 @@ git config --global core.excludesFile ~/.gitignore_global
 
 ## Daily workflow
 
-### Standard bug flow
+### Orchestrated flow (recommended)
+
+Run `ai-team` from inside the target repo. A coach session (TED or BEARD) starts,
+walks you through the flow, and hands off between agents automatically.
 
 ```bash
-# 1. Write ticket to .ai-team/context/TICKET.md, then:
-nikke WEB-7373           # new WT, Watson maps first, you edit TICKET.md → INVESTIGATION.md
+cd ~/work/my-repo
+ai-team
+# Select: Full Recon / Investigation / Pat Solo / Duel / etc.
+# Enter branch name
+# Edit TICKET.md → save → Watson maps → Nikke investigates → Pat fixes
+# TED shows live progress and prints the worktree path when done
+```
 
-# 2. Pat picks up Nikke's worktree:
-pat -c                   # continues in Nikke's WT → implements fix
+Two concurrent flows are supported — TED handles the first, BEARD the second.
 
-# 3. Poirot reviews the full branch (committed + unstaged):
-poirot
+```bash
+goto ted          # switch to TED's session
+goto ted wt       # open new window at TED's active worktree
+goto beard wt     # open new window at BEARD's active worktree
+roster            # see TED/BEARD status alongside agent worktrees
+```
 
-# 4. Pat/Mat finish and mark themselves free automatically.
-#    Worktree stays open for human review.
+When TED completes:
+```
+  Worktree: /Users/you/work/wt-repo-investigate-WEB-123
+  cd '...' && poirot
+```
 
-# 5. Commit, push PR, clean up:
+### Manual flow
+
+```bash
+# Full recon
+nikke WEB-7373           # new WT, Watson inline, edit TICKET.md → INVESTIGATION.md
+pat -c                   # continues in Nikke's WT → fix
+poirot                   # review branch vs main
 wt-clean pat nikke
-```
 
-### Full recon flow
-
-```bash
-watson WEB-7373          # standalone Watson: maps codebase, editor for TICKET.md
-nikke -c                 # Nikke continues in Watson's WT → INVESTIGATION.md
-pat -c                   # Pat continues in Nikke's WT → fix
-```
-
-### Pat vs Mat duel
-
-```bash
-duel fix/WEB-7373        # spins Pat + Mat in parallel on same task
-poirot --compare         # Poirot compares both diffs, gives verdict
+# Pat vs Mat duel
+duel fix/WEB-7373        # spins Pat + Mat in parallel
+poirot --compare         # Poirot compares both, gives verdict
 wt-clean pat mat nikke
 ```
 
@@ -109,22 +118,24 @@ wt-clean pat mat nikke
 
 | Command | Description |
 |---|---|
+| `ai-team` | Launch orchestrated flow via TED/BEARD coach session |
+| `goto ted` | Switch to TED's tmux session |
+| `goto ted wt` | Open new window at TED's active worktree |
+| `goto beard wt` | Open new window at BEARD's active worktree |
 | `watson <branch>` | Map codebase context (Claude Haiku) |
 | `watson --gemini <branch>` | Map codebase with Gemini Flash |
-| `watson -c` | Continue in previous Watson worktree |
 | `nikke <branch>` | Investigate ticket (Watson runs inline first) |
 | `nikke --gemini <branch>` | Nikke with Gemini |
 | `nikke -c` | Continue in previous Nikke/Watson worktree |
 | `pat <branch>` | Claude worker on new branch |
 | `pat -c` | Continue in previous Nikke/Watson worktree |
 | `mat <branch>` | Gemini Flash worker on new branch |
-| `mat -c` | Continue in previous Nikke/Watson worktree |
 | `duel <branch>` | Spin Pat and Mat on the same task |
 | `poirot` | Review branch vs main (committed + unstaged) |
 | `poirot --committed` | Review committed changes only |
 | `poirot --compare` | Compare Pat vs Mat, give verdict |
-| `roster` | Show active worktrees and status |
-| `goto <pat\|mat\|nikke>` | Jump to role's tmux window/worktree |
+| `roster` | Show active worktrees, agents, and coaches |
+| `goto <pat\|mat\|nikke\|ted\|beard>` | Jump to role's tmux session |
 | `wt-clean <role\|all>` | Remove worktrees after merge |
 
 ## Context folder — `.ai-team/`
@@ -240,4 +251,5 @@ Drop PNGs into `portraits/` named `pat.png`, `mat.png`, `nikke.png`,
 - [ ] `roster`: show elapsed time since agent started, not worktree age
 - [ ] `wt-clean`: warn if branch not merged before removing
 - [ ] Stack skill files: `backend-go`, `backend-python` (currently stubs)
+- [ ] Add `--help` to all bin scripts so agents can discover usage programmatically
 - [ ] Neovim+tmux variant (Phase 3)

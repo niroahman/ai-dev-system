@@ -60,7 +60,7 @@ else
   git worktree add "$dir" -b "investigate/$branch"
 
   build-context "$dir/.agent-context.md"
-  setup_worktree "$dir" "$repo_root"
+  setup_worktree "$dir" "$repo_root" ${skip_watson:+--no-editor}
 fi
 
 # --- Watson runs inline first (unless caller already ran it) ---
