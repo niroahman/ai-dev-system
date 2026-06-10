@@ -53,6 +53,8 @@ in scope without polluting global prompts.
 
 ## Setup on a new machine
 
+**Dependencies:** `git`, `tmux`, `fzf` (auto-installed), `claude` + `gemini` (install separately)
+
 ```bash
 git clone <this-repo-url> ~/code/dev-system
 cd ~/code/dev-system
@@ -61,7 +63,14 @@ source ~/.zshrc
 detect-stack # verify it works in any git repo
 ```
 
+The `ai-team` menu requires `fzf` — `install.sh` will install it automatically
+via `apt`/`brew`/`pacman`/`dnf`. Pass `--skip-fzf` to skip installation.
+
 Add `.ai-team/` to your global gitignore so agent context never accidentally commits:
+
+## Daily workflow
+
+### Standard bug flow
 
 ```bash
 echo '.ai-team/' >> ~/.gitignore_global

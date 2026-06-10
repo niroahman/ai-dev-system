@@ -4,6 +4,12 @@
 set -e
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
+SKIP_FZF=0
+for arg in "$@"; do
+  case "$arg" in
+    --skip-fzf) SKIP_FZF=1 ;;
+  esac
+done
 
 echo "Installing dev-system from $REPO_DIR"
 
@@ -57,10 +63,41 @@ git config --global core.hooksPath "$REPO_DIR/git-hooks"
 # 6. Make scripts executable (in case clone didn't preserve)
 chmod +x "$REPO_DIR/bin/"* 2>/dev/null || true
 
-# 6. Verify deps
+# 7. Install fzf (required by ai-team menu)
+if [ "$SKIP_FZF" = 1 ]; then
+  echo "  — fzf (skipped)"
+elif command -v fzf >/dev/null; then
+  echo "  ✓ fzf"
+else
+  echo "  Installing fzf (required by ai-team)..."
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    if command -v brew >/dev/null; then
+      brew install fzf
+    else
+      echo "  ✗ Homebrew not found — install fzf manually: brew install fzf"
+    fi
+  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    if command -v apt-get >/dev/null; then
+      sudo apt-get update -qq && sudo apt-get install -y -qq fzf
+    elif command -v pacman >/dev/null; then
+      sudo pacman -S --noconfirm fzf
+    elif command -v dnf >/dev/null; then
+      sudo dnf install -y fzf
+    else
+      echo "  ✗ Package manager not detected — install fzf manually:"
+      echo "     Debian/Ubuntu: sudo apt install fzf"
+      echo "     Arch:          sudo pacman -S fzf"
+      echo "     Fedora:        sudo dnf install fzf"
+    fi
+  else
+    echo "  ✗ Unsupported OS ($OSTYPE) — install fzf manually: https://github.com/junegunn/fzf#installation"
+  fi
+fi
+
+# 8. Verify deps
 echo ""
 echo "Checking dependencies..."
-for cmd in git tmux claude gemini; do
+for cmd in git tmux claude gemini fzf; do
   if command -v "$cmd" >/dev/null; then
     echo "  ✓ $cmd"
   else
