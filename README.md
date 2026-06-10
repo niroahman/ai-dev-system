@@ -183,6 +183,24 @@ message and stop. Pat's poirot review loop caps at 2 runs.
 Designed to finish in 2-3 minutes. Use `watson --claude` to run Haiku instead
 of Gemini Flash.
 
+## TODO
+
+### Poirot findings → fix flow (missing)
+
+After Poirot writes `REVIEW.md` with findings, there's no built-in flow to dispatch Pat or Mat to apply the fixes. Currently the loop is manual:
+
+```bash
+# manual workaround:
+goto poirot           # read REVIEW.md
+# copy findings, switch back, create new branch
+pat fix/poirot-fixes  # manual handoff of findings
+```
+
+Goal: `poirot-fix` script or `pat -p` flag that:
+- reads Poirot's `REVIEW.md` from the review worktree
+- creates a new worktree with findings pre-loaded
+- launches Pat/Mat with "apply Poirot's findings" as the task
+
 ## Editing workflow
 
 Files are symlinked into `~/dev-system/`, `~/.claude/`, `~/.gemini/`. Edit
