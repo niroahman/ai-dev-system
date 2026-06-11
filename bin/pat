@@ -117,6 +117,11 @@ If any command fails three times in a row (tests, linter, installs):
 
 Do not loop. Do not try workarounds. Blocked is a valid state.
 
+Stay inside the worktree — all file operations limited to this directory
+and the repo root. No recursive searches outside the project (no `find ~`,
+`/Users/`, `/usr/local/lib`, etc.). To find installed package paths use:
+`python3 -c "import MODULE; print(MODULE.__file__)"` instead of find.
+
 # Review cycle
 
 When you have finished the fix:
