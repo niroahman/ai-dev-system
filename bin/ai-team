@@ -171,6 +171,8 @@ ted_complete() {
     printf "  \033[1;37mWorktree:\033[0m \033[1;36m%s\033[0m\n" "$wt"
     printf "  \033[0;37mcd '%s' && poirot\033[0m\n\n" "$wt"
   fi
+  # Clear coach tracking — agents freed, worktree stays for review
+  rm -f "$HOME/.${COACH_LOWER}_wt"
   printf "  \033[0;37mSession stays open. Run \033[1;37mgoto %s\033[0;37m to return here.\033[0m\n\n" "$COACH_LOWER"
 }
 
