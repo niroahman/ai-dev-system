@@ -28,18 +28,20 @@ resolve_named_role "Watson"
 
 # --- Inline mode (called by nikke/pat/mat) ---
 if [ -n "$inline_dir" ]; then
-  mkdir -p "$inline_dir/.ai-team"
+  # Determine repo root — WATSON_MAP.md must go where setup_worktree copies from
+  _watson_repo_root=$(git -C "$inline_dir" rev-parse --show-toplevel 2>/dev/null || echo "$inline_dir")
+  mkdir -p "$_watson_repo_root/.ai-team"
 
-  # Write watson prompt
+  # Write watson prompt — tell Claude to write WATSON_MAP.md to repo root
   {
     printf '%s\n\n' "$ROLE_PORTRAIT_MD"
     printf 'You are operating as %s — the context gatherer. You MAP THE TERRITORY.\n' "$ROLE_NAME"
     printf 'You do NOT diagnose bugs or fix code.\n\n'
+    printf 'REPO_ROOT=%s\n\n' "$_watson_repo_root"
     cat <<'WATSONINLINE'
 # Context
-
-Read .ai-team/context/TICKET.md for the ticket. Read any images there.
-Your only job is to write .ai-team/WATSON_MAP.md. Be fast. Stop early.
+Read REPO_ROOT/.ai-team/context/TICKET.md for the ticket. Read any images there.
+Your only job is to write REPO_ROOT/.ai-team/WATSON_MAP.md. Be fast. Stop early.
 
 STRICT ORDER — HARD CAPS — STOP EARLY:
 1. Read ticket. Extract 2 key terms max. One grep/glob command only.
