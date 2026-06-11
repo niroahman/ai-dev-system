@@ -34,6 +34,9 @@ case "$COACH_SESSION" in
   *)       COACH_NAME="TED";   COACH_ICON="🎽" ;;
 esac
 
+# Coach name lowercase (bash 3.2 compat)
+COACH_LOWER=$(echo "$COACH_NAME" | tr '[:upper:]' '[:lower:]')
+
 # --- Gentle error if deps missing, but degrade gracefully ---
 LOLCAT=""
 BOXES=""
@@ -67,6 +70,20 @@ banner() {
   else
     printf '\033[1;35m  ⚔️  AI TEAM — CHOOSE YOUR FIGHTER  ⚔️\033[0m\n\n'
   fi
+}
+
+# --- Spinner for long-running inline commands ---
+spinner() {
+  local msg="$1"
+  local pid=$!
+  local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+  local i=0
+  while kill -0 "$pid" 2>/dev/null; do
+    printf "\r  [%c] %s" "${spin:$i:1}" "$msg"
+    i=$(( (i+1) % ${#spin} ))
+    sleep 0.1
+  done
+  printf "\r  \033[1;32m✓\033[0m %s\n" "$msg"
 }
 
 # --- Clear screen, show header ---
@@ -169,7 +186,7 @@ ted_complete() {
     printf "  \033[1;37mWorktree:\033[0m \033[1;36m%s\033[0m\n" "$wt"
     printf "  \033[0;37mcd '%s' && poirot\033[0m\n\n" "$wt"
   fi
-  printf "\033[0;37m  Session stays open. Run \033[1;37mgoto %s\033[0;37m to return here.\033[0m\n\n" "${COACH_NAME,,}"
+  printf "  \033[0;37mSession stays open. Run \033[1;37mgoto %s\033[0;37m to return here.\033[0m\n\n" "$COACH_LOWER"
 }
 
 # --- Launch ---
@@ -198,14 +215,15 @@ EOF
       [ "$_confirm" != "y" ] && [ "$_confirm" != "Y" ] && { printf "Aborted.\n"; exec $SHELL; }
     fi
     ted_start "Watson" "mapping codebase inline"
-    watson --inline "$(pwd)"
+    watson --inline "$(pwd)" &
+    spinner "Watson mapping codebase"
     ted_done "Watson" "WATSON_MAP.md written"
     ted_next "Nikke"
     ted_start "Nikke" "investigating ticket"
     _repo_root=$(git worktree list --porcelain | awk 'NR==1{print $2}')
     _repo_name=$(basename "$_repo_root")
     _nikke_wt="$_repo_root/../wt-${_repo_name}-investigate-${branch//\//-}"
-    echo "$_nikke_wt" > "$HOME/.${COACH_NAME,,}_wt"
+    echo "$_nikke_wt" > "$HOME/.${COACH_LOWER}_wt"
     nikke --no-watson "$branch"
     wait_for_agent "Nikke" "$_nikke_wt/.ai-team/INVESTIGATION.md"
     ted_done "Nikke" "INVESTIGATION.md written"
@@ -223,7 +241,7 @@ EOF
     _repo_root=$(git worktree list --porcelain | awk 'NR==1{print $2}')
     _repo_name=$(basename "$_repo_root")
     _nikke_wt="$_repo_root/../wt-${_repo_name}-investigate-${branch//\//-}"
-    echo "$_nikke_wt" > "$HOME/.${COACH_NAME,,}_wt"
+    echo "$_nikke_wt" > "$HOME/.${COACH_LOWER}_wt"
     nikke "$branch"
     wait_for_agent "Nikke" "$_nikke_wt/.ai-team/INVESTIGATION.md"
     ted_done "Nikke" "INVESTIGATION.md written"

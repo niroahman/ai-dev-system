@@ -40,13 +40,13 @@ if [ -n "$inline_dir" ]; then
 Read .ai-team/context/TICKET.md for the ticket. Read any images there.
 Your only job is to write .ai-team/WATSON_MAP.md. Be fast. Stop early.
 
-Steps (strict order, strict caps):
-1. Read the ticket. Extract 3-5 key terms (component names, function names, file hints).
-2. Search for files matching those terms. List matches — do NOT read them all.
-3. Read at most 5 files. Pick the most central ones only.
-4. Run ONE git command across all relevant files: git log --oneline -15 -- <file1> <file2> ...
-5. Detect test framework: check package.json scripts (test, vitest, jest, playwright, e2e, typecheck, lint) and config files (jest.config.*, vitest.config.*, playwright.config.*). For Go: go test. For Python: pytest/ruff/mypy.
-6. STOP. Write WATSON_MAP.md now.
+STRICT ORDER — HARD CAPS — STOP EARLY:
+1. Read ticket. Extract 2 key terms max. One grep/glob command only.
+2. Search ONE directory: src/ if exists, else app/ if exists, else root. No recursive glob.
+3. Read at most 3 files. If you find the relevant file in under 3, stop sooner.
+4. Run ONE git log command only: git log --oneline -10.
+5. Check package.json for test scripts (read file, no search). Skip config file hunting.
+6. Write WATSON_MAP.md with what you have. 90-second hard target.
 
 Write .ai-team/WATSON_MAP.md with:
 
@@ -85,10 +85,10 @@ WATSONINLINE
 
   mkdir -p "$inline_dir/.ai-team"
   if [ "$use_gemini" = "1" ]; then
-    (cd "$inline_dir" && ${MODEL_WATSON_GEMINI:-gemini --model flash} -p "Read .watson-prompt.md and follow it exactly." -y 2>/dev/null) || true
+    (cd "$inline_dir" && ${MODEL_WATSON_GEMINI:-gemini --model flash} -p "Read .watson-prompt.md and follow it exactly." -y) || true
   else
     _wmodel=${MODEL_WATSON:-}
-    (cd "$inline_dir" && claude ${_wmodel:+--model "$_wmodel"} -p "Read .watson-prompt.md and follow it exactly." --permission-mode bypassPermissions 2>/dev/null) || true
+    (cd "$inline_dir" && claude ${_wmodel:+--model "$_wmodel"} -p "Read .watson-prompt.md and follow it exactly." --permission-mode bypassPermissions) || true
   fi
   printf "✅  Watson done\n"
   exit 0
@@ -144,13 +144,13 @@ fi
 Read .ai-team/context/TICKET.md for the ticket. Read any images there.
 Your only job is to write .ai-team/WATSON_MAP.md. Be fast. Stop early.
 
-Steps (strict order, strict caps):
-1. Read the ticket. Extract 3-5 key terms (component names, function names, file hints).
-2. Search for files matching those terms. List matches — do NOT read them all.
-3. Read at most 5 files. Pick the most central ones only.
-4. Run ONE git command across all relevant files: git log --oneline -15 -- <file1> <file2> ...
-5. Detect test framework: check package.json scripts (test, vitest, jest, playwright, e2e, typecheck, lint) and config files (jest.config.*, vitest.config.*, playwright.config.*). For Go: go test. For Python: pytest/ruff/mypy.
-6. STOP. Write WATSON_MAP.md now.
+STRICT ORDER — HARD CAPS — STOP EARLY:
+1. Read ticket. Extract 2 key terms max. One grep/glob command only.
+2. Search ONE directory: src/ if exists, else app/ if exists, else root. No recursive glob.
+3. Read at most 3 files. If you find the relevant file in under 3, stop sooner.
+4. Run ONE git log command only: git log --oneline -10.
+5. Check package.json for test scripts (read file, no search). Skip config file hunting.
+6. Write WATSON_MAP.md with what you have. 90-second hard target.
 
 Write .ai-team/WATSON_MAP.md with:
 
