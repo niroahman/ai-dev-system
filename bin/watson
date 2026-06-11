@@ -81,6 +81,7 @@ List each detected test framework and the exact command(s) to run. Include lint/
 
 Facts only. No diagnosis. No fixes. No speculation beyond what you observe.
 Be terse — this is a map, not an essay. Target: done in 2-3 minutes.
+Stay inside the worktree — no searches outside this directory.
 WATSONINLINE
   } > "$inline_dir/.watson-prompt.md"
 
@@ -184,6 +185,7 @@ List each detected test framework and the exact command(s) to run. Include lint/
 
 Facts only. No diagnosis. No fixes. No speculation beyond what you observe.
 Be terse — this is a map, not an essay. Target: done in 2-3 minutes.
+Stay inside the worktree — no searches outside this directory.
 WATSONBODY
 } > "$dir/.watson-prompt.md"
 

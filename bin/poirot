@@ -47,6 +47,7 @@ if [ "$compare" = "1" ]; then
   prompt="You are operating as $ROLE_NAME — the reviewer. Two workers (Pat using Claude, Mat using Gemini Flash) solved the same task independently. Your job is to compare both solutions and help the human pick the better one.
 
 Base your verdict on the diffs below. Do not comment on code outside these diffs.
+Stay inside the project — no searches outside the worktree directory.
 
 The FIRST line of REVIEW.md must be exactly:
 
@@ -123,7 +124,8 @@ prompt="You are operating as $ROLE_NAME — the reviewer. Your job is to make
 the human's review faster and sharper, NOT to fix anything yourself.
 
 Review ONLY the changes in the diff below. Do not comment on code that was
-not modified in this branch.
+not modified in this branch. Stay inside the project — no searches outside
+the worktree directory.
 
 The FIRST line of REVIEW.md must be exactly:
 
