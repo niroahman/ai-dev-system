@@ -1,9 +1,14 @@
 #!/bin/bash
+# detect-stack reads WORK_DIR and PERSONAL_DIR from config.local (fallback: ~/work, ~/personal)
+# shellcheck source=../config.local
+_REPO="$(cd "$(dirname "$0")/.." && pwd)"
+[ -f "$_REPO/config.local" ] && source "$_REPO/config.local"
+
 stacks=("_global")
 
 case "$PWD" in
-  "$HOME/work/"*|"$HOME/Work/"*) stacks+=("_work") ;;
-  *)                              stacks+=("_personal") ;;
+  "${WORK_DIR:-$HOME/work}/"*|"${WORK_DIR:-$HOME/Work}/"*) stacks+=("_work") ;;
+  *) stacks+=("_personal") ;;
 esac
 
 if [ -f "package.json" ] && \

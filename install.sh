@@ -5,16 +5,70 @@ set -e
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKIP_FZF=0
+NON_INTERACTIVE=0
 for arg in "$@"; do
   case "$arg" in
     --skip-fzf) SKIP_FZF=1 ;;
+    --non-interactive) NON_INTERACTIVE=1 ;;
   esac
 done
 
-echo "Installing dev-system from $REPO_DIR"
+# --- Interactive configuration ---
+CONFIG_LOCAL="$REPO_DIR/config.local"
+if [ "$NON_INTERACTIVE" = 0 ]; then
+  echo ""
+  echo "╔══════════════════════════════════════╗"
+  echo "║  dev-system setup                    ║"
+  echo "╚══════════════════════════════════════╝"
+  echo ""
+
+  # Paths from existing config.local if present, else defaults
+  _existing_work=""
+  _existing_personal=""
+  [ -f "$CONFIG_LOCAL" ] && source "$CONFIG_LOCAL"
+  [ -n "$WORK_DIR" ] && _existing_work="$WORK_DIR"
+  [ -n "$PERSONAL_DIR" ] && _existing_personal="$PERSONAL_DIR"
+
+  echo "Paths are used by detect-stack to choose _work vs _personal skills."
+  echo "Leave empty for defaults."
+  echo ""
+
+  read -r -p "Work repos path [${_existing_work:-$HOME/work}]: " input_work
+  read -r -p "Personal repos path [${_existing_personal:-$HOME/personal}]: " input_personal
+
+  WORK_DIR="${input_work:-${_existing_work:-$HOME/work}}"
+  PERSONAL_DIR="${input_personal:-${_existing_personal:-$HOME/personal}}"
+
+  # Write config.local
+  {
+    echo "# dev-system local configuration"
+    echo "# Written by install.sh $(date -I)"
+    echo ""
+    echo "# Paths for detect-stack (_work vs _personal routing)"
+    echo "WORK_DIR=\"$WORK_DIR\""
+    echo "PERSONAL_DIR=\"$PERSONAL_DIR\""
+    echo ""
+  } > "$CONFIG_LOCAL"
+  echo "  ✓ Written $CONFIG_LOCAL"
+
+  # Append model overrides from current config if they exist
+  if [ -f "$REPO_DIR/config" ]; then
+    # shellcheck source=../config
+    source "$REPO_DIR/config"
+    for var in MODEL_WATSON MODEL_PAT MODEL_NIKKE MODEL_POIROT MODEL_MAT MODEL_WATSON_GEMINI; do
+      [ -n "${!var}" ] && echo "${var}=\"${!var}\"" 2>/dev/null >> "$CONFIG_LOCAL"
+    done
+    # Remove any config.local-only model vars sourced from a previous install
+  fi
+
+  echo ""
+fi
+
+# Ensure dev-system directory
+mkdir -p "$HOME/dev-system"
+echo "Installing dev-system from $REPO_DIR → $HOME/dev-system/"
 
 # 1. Symlink the repo's bin/ skills/ prompts/ portraits/ into ~/dev-system/
-mkdir -p "$HOME/dev-system"
 ln -snf "$REPO_DIR/bin"        "$HOME/dev-system/bin"
 ln -snf "$REPO_DIR/skills"     "$HOME/dev-system/skills"
 ln -snf "$REPO_DIR/prompts"    "$HOME/dev-system/prompts"
@@ -46,7 +100,7 @@ fi
 # 4. Global gitignore for worktree artifacts
 GIG="$HOME/.gitignore_global"
 touch "$GIG"
-for entry in ".vscode/ai/" ".agent-context.md" ".agent-task.md" ".investigate-prompt.md" ".ticket/" "INVESTIGATION.md" "REVIEW.md"; do
+for entry in ".vscode/ai/" ".agent-context.md" ".agent-task.md" ".investigate-prompt.md" ".ticket/" "INVESTIGATION.md" "REVIEW.md" ".ai-team/" "WATSON_MAP.md"; do
   grep -qxF "$entry" "$GIG" || echo "$entry" >> "$GIG"
 done
 git config --global core.excludesfile "$GIG"
