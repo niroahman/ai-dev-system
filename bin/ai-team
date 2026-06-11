@@ -99,11 +99,10 @@ fi
 # --- Menu items ---
 items=(
   '🗺️  Full Recon       Watson → Nikke → Pat       W→N→P chain, full investigation'
-  '🔍  Investigation    Nikke → Pat                bug analysis + fix'
-  '🔨  Pat Solo         Claude implementor         straight to the code'
+  '🔍  Investigation    Watson → Nikke             context map + root cause'
+  '🔨  Pat Solo         Watson → Pat               context map + Claude fix'
+  '🔧  Mat Solo         Watson → Mat               context map + Gemini fix'
   '⚔️  Duel             Pat vs Mat                 compare Claude vs Gemini'
-  '🔧  Mat Solo         Gemini implementor         Flash-powered fixes'
-  '🗺️  Watson Solo      Map the territory          codebase context only'
 )
 
 # --- fzf selection ---
@@ -236,8 +235,8 @@ EOF
     ted_complete "Run: poirot" "$_pat_wt"
     ;;
   '🔍  Investigation'*)
-    ted_log "Investigation — Nikke → Pat  [$branch]"
-    ted_start "Nikke" "investigating ticket (Watson inline)"
+    ted_log "Investigation — Watson → Nikke  [$branch]"
+    ted_start "Nikke" "investigating ticket"
     _repo_root=$(git worktree list --porcelain | awk 'NR==1{print $2}')
     _repo_name=$(basename "$_repo_root")
     _nikke_wt="$_repo_root/../wt-${_repo_name}-investigate-${branch//\//-}"
@@ -245,13 +244,7 @@ EOF
     nikke "$branch"
     wait_for_agent "Nikke" "$_nikke_wt/.ai-team/INVESTIGATION.md"
     ted_done "Nikke" "INVESTIGATION.md written"
-    ted_next "Pat"
-    ted_start "Pat" "implementing fix"
-    pat --no-watson -c -w "$_nikke_wt"
-    _pat_wt="$_nikke_wt"
-    wait_for_agent "Pat" "$_pat_wt/.ai-team/FIX-SUMMARY.md"
-    ted_done "Pat" "FIX-SUMMARY.md written — ready for review"
-    ted_complete "Run: poirot" "$_pat_wt"
+    ted_complete "Review: INVESTIGATION.md in worktree" "$_nikke_wt"
     ;;
   '🔨  Pat Solo'*)
     ted_log "Pat Solo  [$branch]"
@@ -276,13 +269,6 @@ EOF
     wait_for_agent "Mat" "$_mat_wt/.ai-team/FIX-SUMMARY.md"
     ted_done "Mat" "done — ready for review"
     ted_complete "Run: poirot" "$_mat_wt"
-    ;;
-  '🗺️  Watson Solo'*)
-    ted_log "Watson Solo  [$branch]"
-    ted_start "Watson" "mapping codebase"
-    watson "$branch"
-    wait_for_agent "Watson"
-    ted_done "Watson" "WATSON_MAP.md written"
     ;;
   *) printf 'Unknown: %s\n' "$choice" ;;
 esac
