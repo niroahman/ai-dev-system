@@ -99,10 +99,10 @@ fi
 # --- Menu items ---
 items=(
   '🗺️  Full Recon       Watson → Nikke → Pat       W→N→P chain, full investigation'
-  '🔍  Investigation    Watson → Nikke             context map + root cause'
-  '🔨  Pat Solo         Watson → Pat               context map + Claude fix'
-  '🔧  Mat Solo         Watson → Mat               context map + Gemini fix'
-  '⚔️  Duel             Pat vs Mat                 compare Claude vs Gemini'
+  '🔍  Investigation    Watson → Nikke              context map + root cause'
+  '🔨  Pat Solo         Watson → Pat → Poirot       Claude fix + review'
+  '🔧  Mat Solo         Watson → Mat → Poirot       Gemini fix + review'
+  '⚔️  Duel             Pat vs Mat + Poirot         compare outputs, judged by Poirot'
 )
 
 # --- fzf selection ---
