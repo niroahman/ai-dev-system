@@ -102,6 +102,7 @@ Implement the fix described in the ticket and investigation.
 
 Rules:
 - Follow AGENTS.md conventions for code style, testing, and patterns.
+- **Stay inside the worktree.** All file operations limited to current directory and repo root. No recursive searches outside the project (no `find ~` or `/Users/...`). Use `pip show`, `python3 -c "import..."`, or `git grep` instead.
 - Stay in scope — only change what is needed for the fix.
 - Use the files Watson identified in WATSON_MAP.md as your starting point.
 - Run tests after making changes.
