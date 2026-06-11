@@ -211,6 +211,9 @@ EOF
     nikke --no-watson "$branch"
     wait_for_agent "Nikke" "$_nikke_wt/.ai-team/INVESTIGATION.md"
     ted_done "Nikke" "INVESTIGATION.md written"
+    if [ ! -f "$_nikke_wt/.ai-team/INVESTIGATION.md" ]; then
+      printf "  \033[1;31m⚠️  INVESTIGATION.md missing — Nikke may have failed\033[0m\n"
+    fi
     ted_next "Pat"
     ted_start "Pat" "implementing fix"
     pat --no-watson -c -w "$_nikke_wt"
@@ -229,6 +232,9 @@ EOF
     nikke "$branch"
     wait_for_agent "Nikke" "$_nikke_wt/.ai-team/INVESTIGATION.md"
     ted_done "Nikke" "INVESTIGATION.md written"
+    if [ ! -f "$_nikke_wt/.ai-team/INVESTIGATION.md" ]; then
+      printf "  \033[1;31m⚠️  INVESTIGATION.md missing — Nikke may have failed\033[0m\n"
+    fi
     ted_complete "Review: INVESTIGATION.md in worktree" "$_nikke_wt"
     ;;
   '🔨  Pat Solo'*)

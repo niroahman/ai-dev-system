@@ -204,6 +204,9 @@ launch_tmux() {
   local window_name="$2"
   local cmd="$3"
 
+  # Kill any stale session with same name (from aborted runs)
+  tmux kill-session -t "$window_name" 2>/dev/null || true
+
   if [ -n "$TMUX" ]; then
     tmux new-session -d -s "$window_name" -c "$dir" \
       bash -c "$cmd; tmux kill-session -t \"$window_name\" 2>/dev/null || true"
