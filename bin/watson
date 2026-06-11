@@ -28,8 +28,9 @@ resolve_named_role "Watson"
 
 # --- Inline mode (called by nikke/pat/mat) ---
 if [ -n "$inline_dir" ]; then
-  printf "🗺️  \033[1;36mWatson\033[0m mapping the codebase...\n"
+  mkdir -p "$inline_dir/.ai-team"
 
+  # Write watson prompt
   {
     printf '%s\n\n' "$ROLE_PORTRAIT_MD"
     printf 'You are operating as %s — the context gatherer. You MAP THE TERRITORY.\n' "$ROLE_NAME"
@@ -83,7 +84,6 @@ Be terse — this is a map, not an essay. Target: done in 2-3 minutes.
 WATSONINLINE
   } > "$inline_dir/.watson-prompt.md"
 
-  mkdir -p "$inline_dir/.ai-team"
   if [ "$use_gemini" = "1" ]; then
     (cd "$inline_dir" && ${MODEL_WATSON_GEMINI:-gemini --model flash} -p "Read .watson-prompt.md and follow it exactly." -y) || true
   else
