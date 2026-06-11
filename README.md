@@ -156,7 +156,7 @@ All agents read from and write to `.ai-team/` in the worktree:
   context/
     TICKET.md          — ticket written by the human
     *.md, *.png        — architecture docs, screenshots
-  WATSON_MAP.md           — Watson's codebase map (relevant files, code paths)
+  WATSON_MAP.md           — Watson's codebase map (relevant files, code paths, test commands)
   INVESTIGATION.md     — Nikke's root cause analysis and recommended fix
   REVIEW.md            — Poirot's review
   FIX-SUMMARY.md       — Pat/Mat's summary of what changed and why
@@ -280,3 +280,4 @@ Drop PNGs into `portraits/` named `pat.png`, `mat.png`, `nikke.png`,
 - [ ] Stack skill files: `backend-go`, `backend-python` (currently stubs)
 - [ ] Add `--help` to all bin scripts so agents can discover usage programmatically
 - [ ] Neovim+tmux variant (Phase 3)
+- [ ] **Tmux-agnostic launch**: haistele ollaanko tmuxin sisällä (`$TMUX`). Jos ollaan, nykyinen detached-session-malli. Jos ei olla, avaa agentti uuteen terminal-ikkunaan (`open -a Terminal`, `ghostty`, `kitty @new-window`, `wezterm cli spawn`) — vaatii terminal-client-specifin dispatchin `_lib.sh`issa

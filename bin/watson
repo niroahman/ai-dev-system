@@ -45,7 +45,7 @@ Steps (strict order, strict caps):
 2. Search for files matching those terms. List matches — do NOT read them all.
 3. Read at most 5 files. Pick the most central ones only.
 4. Run ONE git command across all relevant files: git log --oneline -15 -- <file1> <file2> ...
-5. Skim test directory names for matches. Do not read test files.
+5. Detect test framework: check package.json scripts (test, vitest, jest, playwright, e2e, typecheck, lint) and config files (jest.config.*, vitest.config.*, playwright.config.*). For Go: go test. For Python: pytest/ruff/mypy.
 6. STOP. Write WATSON_MAP.md now.
 
 Write .ai-team/WATSON_MAP.md with:
@@ -61,6 +61,16 @@ From the single git log run above.
 
 ## Related tests
 Test file paths only (no reading).
+
+## Test commands
+List each detected test framework and the exact command(s) to run. Include lint/typecheck if available. Format:
+- jest: `npx jest`
+- vitest: `npx vitest run`
+- playwright: `npx playwright test`
+- go test: `go test ./...`
+- pytest: `pytest`
+- lint: `npm run lint`
+- typecheck: `npm run typecheck`
 
 ## Codebase patterns
 1-3 lines max. Only what is obvious from files already read.
@@ -139,7 +149,7 @@ Steps (strict order, strict caps):
 2. Search for files matching those terms. List matches — do NOT read them all.
 3. Read at most 5 files. Pick the most central ones only.
 4. Run ONE git command across all relevant files: git log --oneline -15 -- <file1> <file2> ...
-5. Skim test directory names for matches. Do not read test files.
+5. Detect test framework: check package.json scripts (test, vitest, jest, playwright, e2e, typecheck, lint) and config files (jest.config.*, vitest.config.*, playwright.config.*). For Go: go test. For Python: pytest/ruff/mypy.
 6. STOP. Write WATSON_MAP.md now.
 
 Write .ai-team/WATSON_MAP.md with:
@@ -155,6 +165,16 @@ From the single git log run above.
 
 ## Related tests
 Test file paths only (no reading).
+
+## Test commands
+List each detected test framework and the exact command(s) to run. Include lint/typecheck if available. Format:
+- jest: `npx jest`
+- vitest: `npx vitest run`
+- playwright: `npx playwright test`
+- go test: `go test ./...`
+- pytest: `pytest`
+- lint: `npm run lint`
+- typecheck: `npm run typecheck`
 
 ## Codebase patterns
 1-3 lines max. Only what is obvious from files already read.

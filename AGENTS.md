@@ -32,7 +32,7 @@ install.sh     idempotent setup script — symlinks everything, sets PATH, gitig
 
 | Script | Role | Tool | Description |
 |---|---|---|---|
-| `watson` | Context gatherer | Claude Haiku (default) / Gemini Flash | Maps relevant files/code paths, writes WATSON_MAP.md. Runs inline inside nikke/pat/mat. |
+|| `watson` | Context gatherer | Claude Haiku (default) / Gemini Flash | Maps relevant files/code paths, detects test frameworks, writes WATSON_MAP.md. Runs inline inside nikke/pat/mat. |
 | `nikke` | Investigator | Claude | Investigates tickets, writes INVESTIGATION.md. Calls Watson inline first. |
 | `pat` | Worker | Claude | Implements fixes/features. Clears its tracking on finish — free for next task. |
 | `mat` | Worker | Gemini Flash | Same as Pat, Gemini variant. Symlink to pat. |
@@ -58,7 +58,7 @@ All agents share `.ai-team/` in the worktree root:
   context/
     TICKET.md          — ticket written by the human
     *.md, *.png        — architecture docs, diagrams, screenshots
-  WATSON_MAP.md           — Watson's codebase map
+  WATSON_MAP.md           — Watson's codebase map (relevant files, code paths, test commands)
   INVESTIGATION.md     — Nikke's root cause analysis
   REVIEW.md            — Poirot's review output
   FIX-SUMMARY.md       — Pat/Mat's summary of changes
@@ -129,7 +129,8 @@ wt-clean pat nikke
    and launches the next agent in the same worktree.
 
 3. **Watson inline**: When nikke or pat create a new worktree, Watson runs
-   synchronously first to build WATSON_MAP.md before the main agent starts.
+   synchronously first to build WATSON_MAP.md — maps code paths, detects test
+   frameworks, and records exact test commands — before the main agent starts.
 
 4. **Tmux**: Inside tmux, sessions start detached (`goto <role>` to switch).
    Outside tmux, they attach directly.

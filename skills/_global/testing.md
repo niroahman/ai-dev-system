@@ -1,13 +1,14 @@
 # Testing
 
-Before writing FIX-SUMMARY.md, discover and run all available test/lint
-commands. Steps:
+Before writing FIX-SUMMARY.md, run all available test/lint commands.
+Steps in order:
 
-1. Check AGENTS.md for test commands — use those if documented
-2. Otherwise inspect package.json `scripts` for: test, lint, typecheck,
+1. Check WATSON_MAP.md's `## Test commands` section — use those if present
+2. Otherwise check AGENTS.md for test commands
+3. Otherwise inspect package.json `scripts` for: test, lint, typecheck,
    e2e, playwright, vitest, jest — run each that exists
-3. For Go repos: `go test ./...`
-4. For Python repos: check for pytest, ruff, mypy
+4. For Go repos: `go test ./...`
+5. For Python repos: check for pytest, ruff, mypy
 
 Include results in FIX-SUMMARY.md under ## Tests:
 
