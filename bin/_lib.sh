@@ -142,7 +142,7 @@ write_claude_settings() {
       "AskUserQuestion",
       "EnterPlanMode", "ExitPlanMode",
       "TaskCreate", "TaskList", "TaskGet", "TaskUpdate", "TaskOutput", "TaskStop",
-      "Bash(grep:*)", "Bash(find:*)", "Bash(ls:*)", "Bash(git ls-tree:*)",
+      "Bash(grep:*)", "Bash(find:*)", "Bash(ls:*)", "Bash(git ls-tree:*)", "Bash(poirot:*)",
       "mcp__safe-tools__run_tests",
       "mcp__safe-tools__run_install",
       "mcp__safe-tools__run_linter",
