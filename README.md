@@ -17,7 +17,7 @@ own **git worktree** — a full checkout on a dedicated branch — so agents
 never interfere with each other or your working tree.
 
 ```
-ticket
+bug ticket
   └─▶ Watson   maps relevant files → .ai-team/WATSON_MAP.md      (Gemini Flash)
         └─▶ Nikke  investigates root cause → INVESTIGATION.md  (Claude)
               └─▶ Pat / Mat  implements fix on a branch        (Claude / Gemini)
@@ -49,7 +49,7 @@ in scope without polluting global prompts.
 | <img src="portraits/mat.png" width="60" /> | **Mat** | Worker | Gemini Flash |
 | <img src="portraits/nikke.png" width="60" /> | **Nikke** | Investigator | Claude |
 | <img src="portraits/poirot.png" width="60" /> | **Poirot** | Reviewer | Claude |
-| | **Watson** | Context gatherer | Claude Haiku (default) / Gemini Flash |
+| | **Watson** | Context gatherer | Claude Haiku (default) / Gemini Flash | <-- prolly not needed
 
 ## Setup on a new machine
 
@@ -168,7 +168,7 @@ context (TICKET.md, docs, WATSON_MAP.md) is available immediately.
 
 ## Agent behavior
 
-**Ordered reading** — each agent reads context in a defined order:
+**Ordered reading** — each agent reads context available in a defined order:
 ticket → screenshots → architecture docs → WATSON_MAP.md → INVESTIGATION.md → AGENTS.md → personal skills.
 
 **Failure handling** — if a command fails 3 times in a row, Claude agents
@@ -182,6 +182,7 @@ message and stop. Pat's poirot review loop caps at 2 runs.
 **Watson caps** — Watson reads at most 5 files and runs one git log command.
 Designed to finish in 2-3 minutes. Use `watson --claude` to run Haiku instead
 of Gemini Flash.
+
 
 ## TODO
 
@@ -256,7 +257,7 @@ Nikke never writes code. Pat never investigates. Clean handoffs.
 **Permission by default, not by exception** — agents run with `Bash` denied.
 Shell access is explicit opt-in per project, not the default.
 
-**`.ai-team/` not `.vscode/`** — context folder is tool-agnostic and doesn't
+**`.ai-team/` not `.vscode/`** that was used previously as almost every project had it :) — context folder is tool-agnostic and doesn't
 pollute IDE config directories.
 
 ## Skill boundary
@@ -280,4 +281,7 @@ Drop PNGs into `portraits/` named `pat.png`, `mat.png`, `nikke.png`,
 - [ ] Stack skill files: `backend-go`, `backend-python` (currently stubs)
 - [ ] Add `--help` to all bin scripts so agents can discover usage programmatically
 - [ ] Neovim+tmux variant (Phase 3)
-- [ ] **Tmux-agnostic launch**: haistele ollaanko tmuxin sisällä (`$TMUX`). Jos ollaan, nykyinen detached-session-malli. Jos ei olla, avaa agentti uuteen terminal-ikkunaan (`open -a Terminal`, `ghostty`, `kitty @new-window`, `wezterm cli spawn`) — vaatii terminal-client-specifin dispatchin `_lib.sh`issa
+- [ ] **Tmux-agnostic launch**: smell if we are inside tmux (`$TMUX`). IF then choose the detached session model. Jos ei olla, IF NOT open in new terminal window (`open -a Terminal`, `ghostty`, `kitty @new-window`, `wezterm cli spawn`) .. needs terminal specific dispatch on `_lib.sh`
+- [ ] check if there is real benefit on watson and if not scrap it
+- [ ] would be nice to add few test sets for poirot so we can test if it has any hallusinations and can it find different level of bugs nicely.
+- [ ] add .ai-team to ignore automatically
