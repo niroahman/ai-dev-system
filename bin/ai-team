@@ -89,6 +89,7 @@ items=(
   '🔨  Pat Solo         Watson → Pat → Poirot       Claude fix + review'
   '🔧  Mat Solo         Watson → Mat → Poirot       Gemini fix + review'
   '⚔️  Duel             Pat vs Mat + Poirot         compare outputs, judged by Poirot'
+  '🪚  Solo Worktree    (no agent)                  just a worktree + shell, no agent'
 )
 
 # --- fzf selection ---
@@ -171,8 +172,8 @@ ted_complete() {
     printf "  \033[1;37mWorktree:\033[0m \033[1;36m%s\033[0m\n" "$wt"
     printf "  \033[0;37mcd '%s' && poirot\033[0m\n\n" "$wt"
   fi
-  # Clear coach tracking — agents freed, worktree stays for review
-  rm -f "$HOME/.${COACH_LOWER}_wt"
+  # Keep wt path so "goto ted wt" still works after flow completes
+  [ -n "$wt" ] && printf '%s' "$wt" > "$HOME/.${COACH_LOWER}_wt"
   printf "  \033[0;37mSession stays open. Run \033[1;37mgoto %s\033[0;37m to return here.\033[0m\n\n" "$COACH_LOWER"
 }
 
@@ -244,6 +245,7 @@ EOF
     ted_start "Pat" "implementing (Watson inline)"
     pat "$branch"
     _pat_wt=$(cat "$HOME/.pat_last_worktree" 2>/dev/null || echo "")
+    [ -n "$_pat_wt" ] && printf '%s' "$_pat_wt" > "$HOME/.${COACH_LOWER}_wt"
     wait_for_agent "Pat" "$_pat_wt/.ai-team/FIX-SUMMARY.md"
     ted_done "Pat" "done — ready for review"
     ted_complete "Run: poirot" "$_pat_wt"
@@ -259,9 +261,19 @@ EOF
     ted_start "Mat" "implementing (Watson inline)"
     mat "$branch"
     _mat_wt=$(cat "$HOME/.mat_last_worktree" 2>/dev/null || echo "")
+    [ -n "$_mat_wt" ] && printf '%s' "$_mat_wt" > "$HOME/.${COACH_LOWER}_wt"
     wait_for_agent "Mat" "$_mat_wt/.ai-team/FIX-SUMMARY.md"
     ted_done "Mat" "done — ready for review"
     ted_complete "Run: poirot" "$_mat_wt"
+    ;;
+  '🪚  Solo Worktree'*)
+    ted_log "Solo Worktree  [$branch]"
+    ted_start "Solo" "opening worktree, no agent"
+    solo "$branch"
+    _solo_wt=$(cat "$HOME/.solo_last_worktree" 2>/dev/null || echo "")
+    [ -n "$_solo_wt" ] && printf '%s' "$_solo_wt" > "$HOME/.${COACH_LOWER}_wt"
+    ted_done "Solo" "worktree open — no review cycle"
+    ted_complete "goto solo to jump in" "$_solo_wt"
     ;;
   *) printf 'Unknown: %s\n' "$choice" ;;
 esac

@@ -102,20 +102,26 @@ Implement the fix described in the ticket and investigation.
 
 Rules:
 - Follow AGENTS.md conventions for code style, testing, and patterns.
+- Prefer MCP tools over raw Bash: use `mcp__safe-tools__run_tests` to run tests, `mcp__safe-tools__run_install` to install deps, `mcp__safe-tools__run_linter` for linting. Fall back to Bash only if the MCP tool is unavailable.
 - **Stay inside the worktree.** All file operations limited to current directory and repo root. No recursive searches outside the project (no `find ~` or `/Users/...`). Use `pip show`, `python3 -c "import..."`, or `git grep` instead.
 - Stay in scope — only change what is needed for the fix.
 - Use the files Watson identified in WATSON_MAP.md as your starting point.
-- Run tests after making changes.
+- Try to run tests after making changes. If tests fail to execute (environment issue, missing deps, PYTHONPATH problems), log the command in BLOCKED.md and move on — do not spend more than one attempt on test environment setup.
 - Do not leave debug code, TODOs, or commented-out blocks.
 
 # Failure handling
 
-If any command fails three times in a row (tests, linter, installs):
-- STOP. Do not retry.
-- Use AskUserQuestion to tell the human what failed and ask how to proceed.
-- Wait for their answer before continuing.
+If any command fails (tests, linter, installs, pip):
+- Try once with an obvious fix. If it fails again, stop retrying that command.
+- Do NOT use AskUserQuestion. Do NOT wait for input.
+- Record the failed command and error in .ai-team/BLOCKED.md and continue with the rest of the work.
+- If the failure blocks the core task, write what you could not complete to BLOCKED.md and proceed to the review cycle and FIX-SUMMARY.md anyway.
 
-Do not loop. Do not try workarounds. Blocked is a valid state.
+BLOCKED.md format:
+```
+## Blocked commands
+- `<command>` — <exact error message>
+```
 
 Stay inside the worktree — all file operations limited to this directory
 and the repo root. No recursive searches outside the project (no `find ~`,
@@ -124,10 +130,12 @@ and the repo root. No recursive searches outside the project (no `find ~`,
 
 # Review cycle
 
+`poirot` is a shell command that runs a separate Claude instance as a code reviewer. It reads your git diff, the task, and AGENTS.md, then writes a review to `.ai-team/REVIEW.md`. It runs in the foreground and may take 20–60 seconds. It exits on its own — do not interrupt it.
+
 When you have finished the fix:
-1. Run `poirot` from the shell. Read .ai-team/REVIEW.md.
+1. Run `poirot` from the shell with a 5-minute timeout (300000 ms) — it spawns a separate Claude process and takes 1–5 minutes. Wait for it to exit fully. Then read .ai-team/REVIEW.md.
 2. Address every issue Poirot raised. Fix the code.
-3. Run `poirot` once more — max 2 runs total. If issues persist, use AskUserQuestion to report what remains and ask how to proceed.
+3. Run `poirot` once more — max 2 runs total. If issues persist, add them to BLOCKED.md and continue to FIX-SUMMARY.md.
 4. Write .ai-team/FIX-SUMMARY.md with:
 
 ## What changed
@@ -138,6 +146,9 @@ Reasoning behind each decision. Flag anything uncertain.
 
 ## Anything skipped or deferred
 Things you noticed but did not change.
+
+## Commands that could not run
+List any commands from BLOCKED.md here. Empty section if none.
 
 TASKBODY
   printf 'Once FIX-SUMMARY.md is written, your job is done.\n'

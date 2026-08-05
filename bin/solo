@@ -1,0 +1,34 @@
+#!/bin/bash
+# Usage: solo fix/login-bug   # new worktree + tmux session, no agent
+set -e
+source "$HOME/dev-system/bin/_lib.sh"
+
+branch="${1:-}"
+if [ -z "$branch" ]; then
+  echo "Usage: $(basename "$0") <branch>"
+  exit 1
+fi
+
+repo_root=$(git worktree list --porcelain | awk 'NR==1{print $2}')
+repo_name=$(basename "$repo_root")
+
+# No worktree cap here — solo has no agent to lose track of.
+
+dir="$repo_root/../wt-${repo_name}-${branch//\//-}"
+window_name="Solo-${branch//\//-}"
+
+if git show-ref --verify --quiet "refs/heads/$branch"; then
+  git worktree add "$dir" "$branch"
+else
+  git worktree add "$dir" -b "$branch"
+fi
+
+track_worktree "solo" "$dir"
+
+printf "\n🪚  \033[1;32mSolo\033[0m opened \033[1;36m%s\033[0m\n\n" "$(basename "$dir")"
+
+launch_tmux "$dir" "$window_name" "\$SHELL"
+
+if [ -n "$TMUX" ]; then
+  tmux switch-client -t "$window_name"
+fi

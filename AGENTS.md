@@ -117,6 +117,7 @@ wt-clean pat nikke
 | `poirot` | current | Review branch vs main (committed + unstaged). |
 | `poirot --committed` | current | Review committed changes only. |
 | `poirot --compare` | current | Compare Pat vs Mat outputs. |
+| `solo <branch>` | new | Plain worktree + tmux shell, no agent. Existing branch OK, no `-b` clash. Auto-switches into the session. |
 
 ### How it works
 
@@ -133,7 +134,8 @@ wt-clean pat nikke
    frameworks, and records exact test commands — before the main agent starts.
 
 4. **Tmux**: Inside tmux, sessions start detached (`goto <role>` to switch).
-   Outside tmux, they attach directly.
+   Outside tmux, they attach directly. Exception: `solo` auto-switches
+   immediately since there's no background agent to avoid interrupting.
 
 5. **Free on finish**: Pat/Mat clear their tracking file (`~/.pat_last_worktree`,
    `~/.mat_last_worktree`) when done. `roster` shows them as idle. The worktree

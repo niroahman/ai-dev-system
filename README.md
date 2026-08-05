@@ -49,7 +49,7 @@ in scope without polluting global prompts.
 | <img src="portraits/mat.png" width="60" /> | **Mat** | Worker | Gemini Flash |
 | <img src="portraits/nikke.png" width="60" /> | **Nikke** | Investigator | Claude |
 | <img src="portraits/poirot.png" width="60" /> | **Poirot** | Reviewer | Claude |
-| | **Watson** | Context gatherer | Claude Haiku (default) / Gemini Flash | <-- prolly not needed
+| | **Watson** | Context gatherer | Claude Haiku (default) / Gemini Flash |
 
 ## Setup on a new machine
 
@@ -143,8 +143,9 @@ wt-clean pat mat nikke
 | `poirot` | Review branch vs main (committed + unstaged) |
 | `poirot --committed` | Review committed changes only |
 | `poirot --compare` | Compare Pat vs Mat, give verdict |
+| `solo <branch>` | Plain worktree + tmux shell, no agent. Works on an existing branch too. Auto-switches into the session. |
 | `roster` | Show active worktrees, agents, and coaches |
-| `goto <pat\|mat\|nikke\|ted\|beard>` | Jump to role's tmux session |
+| `goto <pat\|mat\|nikke\|solo\|ted\|beard>` | Jump to role's tmux session |
 | `wt-clean <role\|all>` | Remove worktrees after merge |
 
 ## Context folder — `.ai-team/`
